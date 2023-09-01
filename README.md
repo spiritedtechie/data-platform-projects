@@ -1,1 +1,3 @@
-# llm-data-quality-analyser
+# data-platform-projects
+
+Exploring data platform technologies.
