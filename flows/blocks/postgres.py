@@ -1,7 +1,7 @@
 from prefect.blocks.core import Block
 from pydantic import SecretStr
-from postgres_loader import load_file_to_database
-from postgres_loader import DatabaseProperties
+from lib.postgres_loader import load_file_to_database
+from lib.postgres_loader import DatabaseProperties
 
 
 class Postgres(Block):

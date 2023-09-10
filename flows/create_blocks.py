@@ -1,11 +1,11 @@
 from dotenv import load_dotenv
 import os
 
-from blocks import postgres
+from blocks.postgres import Postgres
 
 load_dotenv()
 
-postgres = postgres.Postgres(
+postgres = Postgres(
     host=os.environ.get("POSTGRES_HOST"),
     port=os.environ.get("POSTGRES_PORT"),
     db=os.environ.get("POSTGRES_DB"),
