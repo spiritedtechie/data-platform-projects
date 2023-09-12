@@ -1,0 +1,7 @@
+version: 2
+
+sources:
+  - name: retail
+    schema: public
+    tables:
+      - name: online_retail

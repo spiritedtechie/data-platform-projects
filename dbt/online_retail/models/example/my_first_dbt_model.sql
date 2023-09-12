@@ -2,7 +2,7 @@
 
 with invoices_per_country as (
     select country, count(*) as count
-    from online_retail
+    from {{ source('retail', 'online_retail') }}
     group by country
 )
 
