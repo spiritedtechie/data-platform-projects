@@ -1,0 +1,30 @@
+[0m09:48:50.373682 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10530cbd0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10560ac50>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x105609cd0>]}
+
+
+============================== 09:48:50.379065 | 5861cd6a-3076-40f3-a8e3-e93581fb54b9 ==============================
+[0m09:48:50.379065 [info ] [MainThread]: Running with dbt=1.6.2
+[0m09:48:50.379589 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'debug': 'False', 'fail_fast': 'False', 'log_path': 'logs', 'profiles_dir': '/Users/vijay/.dbt', 'version_check': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'log_format': 'default', 'introspect': 'True', 'invocation_command': 'dbt init online_retail', 'static_parser': 'True', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'send_anonymous_usage_stats': 'True'}
+[0m09:48:50.380079 [warn ] [MainThread]: [ConfigFolderDirectory]: Unable to parse dict {'dir': PosixPath('/Users/vijay/.dbt')}
+[0m09:48:50.380386 [info ] [MainThread]: Creating dbt configuration folder at 
+[0m09:48:50.381225 [debug] [MainThread]: Starter project path: /Users/vijay/.pyenv/versions/data-platform-project/lib/python3.11/site-packages/dbt/include/starter_project
+[0m09:48:50.386514 [info ] [MainThread]: 
+Your new dbt project "online_retail" was created!
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m09:48:50.386861 [info ] [MainThread]: Setting up your profile.
+[0m09:49:05.985994 [info ] [MainThread]: Profile online_retail written to /Users/vijay/.dbt/profiles.yml using target's sample configuration. Once updated, you'll be able to start developing with dbt.
+[0m09:49:05.986618 [debug] [MainThread]: Command `dbt init` succeeded at 09:49:05.986519 after 15.64 seconds
+[0m09:49:05.986939 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x103f83750>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x100ca85d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1055f79d0>]}
+[0m09:49:05.987279 [debug] [MainThread]: Flushing usage events
