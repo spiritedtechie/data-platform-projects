@@ -1,7 +1,7 @@
 from prefect.blocks.core import Block
 from pydantic import SecretStr
 from lib.postgres_loader import load_file_to_database
-from lib.postgres_loader import DatabaseProperties
+from lib.postgres_loader import PostgresDBProperties
 
 
 class Postgres(Block):
@@ -14,5 +14,5 @@ class Postgres(Block):
     def load_from_csv(self, file_path):
         return load_file_to_database(
             file_path,
-            DatabaseProperties(self.host, self.port, self.db, self.user.get_secret_value(), self.password.get_secret_value()),
+            PostgresDBProperties(self.host, self.port, self.db, self.user.get_secret_value(), self.password.get_secret_value()),
         )

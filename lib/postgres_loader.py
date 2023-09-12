@@ -1,19 +1,20 @@
-import psycopg2
-import slugify
 import argparse
 import os
-
-from dotenv import load_dotenv
 from pathlib import Path
 
+import psycopg2
+import slugify
+from dotenv import load_dotenv
+from dataclasses import dataclass
 
-class DatabaseProperties:
-    def __init__(self, host, port, db_name, user, password):
-        self.host = host
-        self.port = port
-        self.db_name = db_name
-        self.user = user
-        self.password = password
+
+@dataclass
+class PostgresDBProperties:
+    host: str
+    port: str
+    db: str
+    user: str
+    password: str
 
 
 def generate_create_table_statement(file, delimeter=","):
@@ -40,13 +41,13 @@ def generate_create_table_statement(file, delimeter=","):
         return table_name, sql
 
 
-def load_file_to_database(file_path, db: DatabaseProperties):
+def load_file_to_database(file_path, db: PostgresDBProperties):
     table_name, sql = generate_create_table_statement(file_path)
 
     conn = psycopg2.connect(
         host=db.host,
         port=db.port,
-        dbname=db.db_name,
+        dbname=db.db,
         user=db.user,
         password=db.password,
     )
@@ -68,7 +69,7 @@ def load_file_to_database(file_path, db: DatabaseProperties):
 def main():
     load_dotenv(".env")
 
-    db = DatabaseProperties(
+    db = PostgresDBProperties(
         os.getenv("POSTGRES_HOST"),
         os.getenv("POSTGRES_PORT"),
         os.getenv("POSTGRES_DB"),
