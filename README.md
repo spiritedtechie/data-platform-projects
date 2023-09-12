@@ -7,6 +7,22 @@ Exploring data platform technologies.
 pip install -r requirements.txt
 ```
 
+Start Prefect local server
+```
+prefect server start
+```
+
+Create Prefect configuration blocks:
+```
+PYTHONPATH="." python flows/create_blocks.py
+```
+
+Deploy and run flow
+```
+PYTHONPATH="." python flows/flow.py
+prefect deployment run 'Retail data/retail-data-deployment'
+```
+
 Source environment and run Soda tests
 ```
 set -a; source .env; set +a
