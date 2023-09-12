@@ -1,0 +1,13 @@
+data_source postgres_dw:
+   type: postgres
+   connection:
+     host: ${POSTGRES_HOST}
+     username: ${POSTGRES_USER}
+     password: ${POSTGRES_PASSWORD}
+   database: ${POSTGRES_DB}
+   schema: public
+
+soda_cloud:
+  host: cloud.soda.io
+  api_key_id: ${SODA_KEY}
+  api_key_secret: ${SODA_KEY_SECRET}

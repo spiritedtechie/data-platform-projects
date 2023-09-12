@@ -1,0 +1,15 @@
+checks for online_retail:
+  - missing_count(invoiceno) = 0:
+       name: Ensure there are no null values in the Invoice No column
+  - missing_count(quantity) = 0:
+       name: Ensure there are no null values in the Quantity column
+  - missing_count(invoicedate) = 0:
+       name: Ensure there are no null values in the Invoice Date column
+  - missing_count(unitprice) = 0:
+       name: Ensure there are no null values in the Unit Price column
+  - schema:
+      fail:
+        when required column missing: [invoiceno, stockcode, description, quantity, invoicedate, unitprice, customerid, country]
+      warn:
+        when schema changes: any
+      name: Columns have not been added, removed, or changed

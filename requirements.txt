@@ -1,6 +1,9 @@
+-i https://pypi.cloud.soda.io
 psycopg2==2.9.7
 python-slugify==8.0.1
 python-dotenv==1.0.0
 prefect==2.13.0
 dbt-core==1.6.2
 dbt-postgres==1.6.2
+soda-postgres==1.1.8
+prefect-soda-core[postgres]==0.1.6
