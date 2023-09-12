@@ -5,6 +5,8 @@ from prefect.context import FlowRunContext
 from prefect_soda_core.soda_configuration import SodaConfiguration
 from prefect_soda_core.sodacl_check import SodaCLCheck
 from prefect_soda_core.tasks import soda_scan_execute
+from prefect_dbt import DbtCoreOperation, DbtCliProfile
+
 
 soda = Soda.load("default")
 postgres = Postgres.load("default")
@@ -39,11 +41,26 @@ def quality_check_raw_data():
     )
 
 
+@task
+def create_models():
+    env = {**postgres.as_env_properties()}
+    dbt_init = DbtCoreOperation(
+        commands=["dbt debug", "dbt run"],
+        profiles_dir="./dbt",
+        project_dir="./dbt/online_retail",
+        overwrite_profiles=False,
+        env=env,
+    )
+    dbt_init.run()
+
+
 @flow(name="Retail data", log_prints=True)
 def process_retail_data():
     load = load_csv_to_store("./datasets/Online_Retail.csv")
 
-    quality_check_raw_data(wait_for=[load])
+    check = quality_check_raw_data(wait_for=[load])
+
+    create_models(wait_for=[check])
 
 
 if __name__ == "__main__":

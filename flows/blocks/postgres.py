@@ -30,4 +30,5 @@ class Postgres(Block):
             "POSTGRES_DB": self.db,
             "POSTGRES_USER": self.user.get_secret_value(),
             "POSTGRES_PASSWORD": self.password.get_secret_value(),
+            "DBT_ENV_SECRET_POSTGRES_PASSWORD": self.password.get_secret_value()
         }
