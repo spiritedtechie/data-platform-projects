@@ -11,4 +11,3 @@ postgres_dw:
       schema: public
       threads: 1
       connect_timeout: 30
-      sslmode: require

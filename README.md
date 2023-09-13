@@ -12,6 +12,12 @@ Start Prefect local server
 prefect server start
 ```
 
+Start a local Postgres
+```
+docker build . -t data-platform-postgres
+docker run -d -p 5432:5432 data-platform-postgres
+```
+
 Create Prefect configuration blocks:
 ```
 PYTHONPATH="." python flows/create_blocks.py
