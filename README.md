@@ -32,7 +32,8 @@ prefect deployment run 'Retail data/retail-data-deployment'
 Source environment and run Soda tests
 ```
 set -a; source .env; set +a
-soda scan -d postgres_dw -c soda/configuration.yml soda/checks/sources/raw_invoices.yml
+soda test-connection -d raw -c soda/configuration.yml
+soda scan -d raw -c soda/configuration.yml soda/checks/sources/raw_invoices.yml
 ```
 
 Source environment and run DBT

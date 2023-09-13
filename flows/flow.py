@@ -13,8 +13,8 @@ postgres = Postgres.load("default")
 
 
 @task
-def load_csv_to_store(file_path):
-    return postgres.load_csv(file_path)
+def load_raw_data_to_store():
+    return postgres.load_csv("./datasets/invoices.csv", schema="raw")
 
 
 @task
@@ -30,7 +30,7 @@ def quality_check_raw_data():
     soda_check = SodaCLCheck(sodacl_yaml_path="./soda/checks/sources/raw_invoices.yml")
 
     return soda_scan_execute.fn(
-        data_source_name="postgres_dw",
+        data_source_name="raw",
         configuration=soda_configuration,
         checks=soda_check,
         scan_results_file=scan_results_file_path,
@@ -56,7 +56,7 @@ def create_models():
 
 @flow(name="Retail data", log_prints=True)
 def process_retail_data():
-    load = load_csv_to_store("./datasets/Online_Retail.csv")
+    load = load_raw_data_to_store()
 
     check = quality_check_raw_data(wait_for=[load])
 

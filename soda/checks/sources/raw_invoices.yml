@@ -1,4 +1,4 @@
-checks for online_retail:
+checks for invoices:
   - missing_count(invoiceno) = 0:
        name: Ensure there are no null values in the Invoice No column
   - missing_count(quantity) = 0:

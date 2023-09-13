@@ -17,7 +17,7 @@ class PostgresDBProperties:
     password: str
 
 
-def generate_create_table_statement(file, delimeter=","):
+def generate_create_table_statement(file, schema="public", delimeter=","):
     table_name = Path(file).stem
 
     with open(file, "r") as f:
@@ -34,15 +34,17 @@ def generate_create_table_statement(file, delimeter=","):
         column_defs = ", ".join(f"{col} text" for col in column_names)
 
         sql = f"""
-            drop table if exists {table_name}; 
-            create table {table_name} (\n {column_defs} \n);
+            drop table if exists {schema}.{table_name}; 
+            create table {schema}.{table_name} (\n {column_defs} \n);
         """
 
         return table_name, sql
 
 
-def load_file_to_database(file_path, db: PostgresDBProperties):
-    table_name, sql = generate_create_table_statement(file_path)
+def load_file_to_database(
+    file_path: str, db: PostgresDBProperties, schema: str = "public"
+):
+    table_name, sql = generate_create_table_statement(file_path, schema=schema)
 
     conn = psycopg2.connect(
         host=db.host,
@@ -59,7 +61,7 @@ def load_file_to_database(file_path, db: PostgresDBProperties):
 
                 with open(file_path, "r") as f:
                     cur.copy_expert(
-                        f"COPY {table_name} FROM stdin WITH CSV HEADER DELIMITER ',' ENCODING 'utf-8'",
+                        f"COPY {schema}.{table_name} FROM stdin WITH CSV HEADER DELIMITER ',' ENCODING 'utf-8'",
                         f,
                     )
     finally:

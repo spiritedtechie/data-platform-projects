@@ -11,10 +11,11 @@ class Postgres(Block):
     user: SecretStr
     password: SecretStr
 
-    def load_csv(self, file_path):
+    def load_csv(self, file_path, schema):
         return load_file_to_database(
-            file_path,
-            PostgresDBProperties(
+            file_path=file_path,
+            schema=schema,
+            db=PostgresDBProperties(
                 self.host,
                 self.port,
                 self.db,
@@ -30,5 +31,5 @@ class Postgres(Block):
             "POSTGRES_DB": self.db,
             "POSTGRES_USER": self.user.get_secret_value(),
             "POSTGRES_PASSWORD": self.password.get_secret_value(),
-            "DBT_ENV_SECRET_POSTGRES_PASSWORD": self.password.get_secret_value()
+            "DBT_ENV_SECRET_POSTGRES_PASSWORD": self.password.get_secret_value(),
         }

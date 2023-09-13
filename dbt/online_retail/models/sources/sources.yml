@@ -1,7 +1,7 @@
 version: 2
 
 sources:
-  - name: retail
-    schema: public
+  - name: raw_retail
+    schema: raw
     tables:
-      - name: online_retail
+      - name: invoices

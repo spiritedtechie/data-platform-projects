@@ -8,6 +8,6 @@ postgres_dw:
       password: "{{ env_var('DBT_ENV_SECRET_POSTGRES_PASSWORD') }}"
       port: "{{ env_var('POSTGRES_PORT') | int }}"
       dbname: "{{ env_var('POSTGRES_DB') }}"
-      schema: public
       threads: 1
       connect_timeout: 30
+      schema: public
