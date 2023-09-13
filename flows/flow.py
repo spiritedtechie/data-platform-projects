@@ -14,6 +14,7 @@ postgres = Postgres.load("default")
 
 @task
 def load_raw_data_to_store():
+    postgres.load_csv("./datasets/countries.csv", schema="raw")
     return postgres.load_csv("./datasets/invoices.csv", schema="raw")
 
 
