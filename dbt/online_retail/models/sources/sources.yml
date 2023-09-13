@@ -5,3 +5,4 @@ sources:
     schema: raw
     tables:
       - name: invoices
+      - name: countries
