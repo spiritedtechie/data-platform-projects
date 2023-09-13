@@ -1,4 +1,5 @@
 -i https://pypi.cloud.soda.io
+shandy-sqlfmt[jinjafmt]
 psycopg2==2.9.7
 python-slugify==8.0.1
 python-dotenv==1.0.0

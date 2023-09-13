@@ -1,12 +1,27 @@
-{{ config(materialized='table') }}
+{{ config(
+    materialized = 'table'
+) }}
 
-select 
-    cast(invoiceno as varchar(10)) as invoice_id,
-    cast(stockcode as varchar(10)) as stock_code,
-    cast(description as varchar(100)),
-    cast(quantity as integer),
-    to_timestamp(invoicedate,'MM/DD/YY HH24:MI') as invoice_date,
-    cast(unitprice as decimal) as unit_price,
-    cast(customerid as integer) as customer_id,
-    cast(country as varchar(50))
-from {{ source('raw_retail', 'invoices') }}
+SELECT
+    CAST(invoiceno AS VARCHAR(10)) AS invoice_id,
+    CAST(stockcode AS VARCHAR(10)) AS stock_code,
+    CAST(description AS VARCHAR(100)),
+    CAST(
+        quantity AS INTEGER
+    ),
+    TO_TIMESTAMP(
+        invoicedate,
+        'MM/DD/YY HH24:MI'
+    ) AS invoice_date,
+    CAST(
+        unitprice AS DECIMAL
+    ) AS unit_price,
+    CAST(
+        customerid AS INTEGER
+    ) AS customer_id,
+    CAST(country AS VARCHAR(50))
+FROM
+    {{ source(
+        'raw_retail',
+        'invoices'
+    ) }}

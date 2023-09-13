@@ -1,10 +1,21 @@
-{{ config(materialized='table') }}
+{{ config(
+    materialized = 'table'
+) }}
 
-with invoices_per_country as (
-    select country, count(*) as count
-    from {{ source('raw_retail', 'invoices') }}
-    group by country
+WITH invoices_per_country AS (
+
+    SELECT
+        country,
+        COUNT(*) AS COUNT
+    FROM
+        {{ source(
+            'raw_retail',
+            'invoices'
+        ) }}
+    GROUP BY
+        country
 )
-
-select *
-from invoices_per_country
+SELECT
+    *
+FROM
+    invoices_per_country
