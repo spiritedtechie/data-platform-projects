@@ -1,0 +1,40 @@
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    volumes:
+      - ./pg-init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - network
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_MULTIPLE_DATABASES: metabaseappdb
+
+  metabase:
+    build:
+      context: .
+      dockerfile: Dockerfile.metabase
+    depends_on:
+      - postgres
+    expose:
+      - "3001"
+    ports:
+      - "3000:3000"
+    networks:
+      - network
+    environment:
+      MB_DB_TYPE: postgres 
+      MB_DB_DBNAME: metabaseappdb
+      MB_DB_PORT: 5432
+      MB_DB_USER: postgres
+      MB_DB_PASS: postgres
+      MB_DB_HOST: postgres
+
+networks:
+  network:

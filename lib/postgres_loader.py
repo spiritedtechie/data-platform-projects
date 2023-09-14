@@ -34,6 +34,7 @@ def generate_create_table_statement(file, schema="public", delimeter=","):
         column_defs = ", ".join(f"{col} text" for col in column_names)
 
         sql = f"""
+            create schema if not exists {schema};
             drop table if exists {schema}.{table_name} cascade; 
             create table {schema}.{table_name} (\n {column_defs} \n);
         """
