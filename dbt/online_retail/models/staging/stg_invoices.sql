@@ -1,7 +1,3 @@
-{{ config(
-    materialized = 'table'
-) }}
-
 -- To do replace country: USA with full length name
 SELECT
     CAST(invoiceno AS VARCHAR(10)) AS invoice_id,

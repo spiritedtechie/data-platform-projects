@@ -1,3 +1,11 @@
+{{ config(
+    materialized = 'table',
+    indexes=[
+      {'columns': ['id'], 'unique': True},
+      {'columns': ['unit_price']},
+    ]
+) }}
+
 SELECT
     DISTINCT {{ dbt_utils.generate_surrogate_key(['stock_code', 'description', 'unit_price']) }} AS id,
     stock_code,

@@ -1,3 +1,11 @@
+{{ config(
+    materialized = 'table',
+    indexes=[
+      {'columns': ['quantity']},
+      {'columns': ['total']}
+    ]
+) }}
+
 WITH invoices_cte AS (
     SELECT
         invoice_id,

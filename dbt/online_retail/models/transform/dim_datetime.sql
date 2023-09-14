@@ -1,3 +1,10 @@
+{{ config(
+    materialized = 'table',
+    indexes=[
+      {'columns': ['id'], 'unique': True},
+    ]
+) }}
+
 WITH datetime_cte AS (
   SELECT
     DISTINCT invoice_date AS date_time

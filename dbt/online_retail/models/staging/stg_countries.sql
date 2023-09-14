@@ -1,7 +1,3 @@
-{{ config(
-    materialized = 'table'
-) }}
-
 WITH nulls_replaced AS (
 
     SELECT

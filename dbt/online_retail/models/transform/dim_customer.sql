@@ -1,3 +1,11 @@
+{{ config(
+    materialized = 'table',
+    indexes=[
+      {'columns': ['id'], 'unique': True},
+      {'columns': ['iso']},
+    ]
+) }}
+
 -- Create the dimension table
 WITH customer_cte AS (
     SELECT
