@@ -4,9 +4,8 @@ WITH invoices_cte AS (
         invoice_date AS datetime_id,
         {{ dbt_utils.generate_surrogate_key(['stock_code', 'description', 'unit_price']) }} AS product_id,
         {{ dbt_utils.generate_surrogate_key(['customer_id', 'country']) }} AS customer_id,
-        unit_price,
         quantity AS quantity,
-        quantity * unit_price AS total_price
+        quantity * unit_price AS total
     FROM
         {{ ref(
             'stg_invoices'
@@ -19,9 +18,8 @@ SELECT
     dt.id AS datetime_id,
     dp.id AS product_id,
     dc.id AS customer_id,
-    fi.unit_price,
     fi.quantity,
-    fi.total_price
+    fi.total
 FROM
     invoices_cte fi
     INNER JOIN {{ ref('dim_datetime') }}
