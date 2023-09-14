@@ -1,6 +1,11 @@
 # data-platform-projects
 
-Exploring data platform technologies.
+Exploring data platform technologies:
+
+- Prefect
+- DBT
+- Soda.io
+
 
 ## Commands
 ```
