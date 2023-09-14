@@ -1,0 +1,21 @@
+checks for fct_invoices:
+  - schema:
+      fail:
+        when required column missing: 
+          [invoice_id, product_id, customer_id, datetime_id, quantity, unit_price, total_price]
+        when wrong column type:
+          invoice_id: text
+          product_id: text
+          customer_id: text
+          datetime_id: timestamp with time zone
+          quantity: integer
+          unit_price: numeric
+          total_price: numeric
+  - missing_count(invoice_id) = 0:
+      name: All invoices have a key
+  - failed rows:
+      name: All invoices have a positive total amount
+      fail query: |
+        SELECT invoice_id, total_price
+        FROM fct_invoices
+        WHERE total_price < 0

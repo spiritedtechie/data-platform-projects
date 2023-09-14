@@ -1,12 +1,19 @@
 checks for invoices:
   - missing_count(invoiceno) = 0:
+       missing values: [n/a, NA, none, 'NULL']
        name: Ensure there are no null values in the Invoice No column
   - missing_count(quantity) = 0:
+       missing values: [n/a, NA, none, 'NULL', '0']
        name: Ensure there are no null values in the Quantity column
   - missing_count(invoicedate) = 0:
+       missing values: [n/a, NA, none, 'NULL']
        name: Ensure there are no null values in the Invoice Date column
   - missing_count(unitprice) = 0:
+       missing values: [n/a, NA, none, 'NULL']
        name: Ensure there are no null values in the Unit Price column
+  - missing_count(country) = 0:
+       missing values: [n/a, NA, none, 'NULL']
+       name: Ensure there are no null values in the Country column
   - schema:
       fail:
         when required column missing: [invoiceno, stockcode, description, quantity, invoicedate, unitprice, customerid, country]
