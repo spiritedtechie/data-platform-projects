@@ -1,19 +1,19 @@
 data_source raw:
    type: postgres
    connection:
-     host: ${POSTGRES_HOST}
-     username: ${POSTGRES_USER}
-     password: ${POSTGRES_PASSWORD}
-   database: ${POSTGRES_DB}
+     host: ${DW_HOST}
+     username: ${DW_USER}
+     password: ${DW_PASSWORD}
+   database: ${DW_DB}
    schema: raw
 
 data_source retail:
    type: postgres
    connection:
-     host: ${POSTGRES_HOST}
-     username: ${POSTGRES_USER}
-     password: ${POSTGRES_PASSWORD}
-   database: ${POSTGRES_DB}
+     host: ${DW_HOST}
+     username: ${DW_USER}
+     password: ${DW_PASSWORD}
+   database: ${DW_DB}
    schema: retail
 
 soda_cloud:

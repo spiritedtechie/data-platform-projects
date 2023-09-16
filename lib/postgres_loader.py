@@ -73,11 +73,11 @@ def main():
     load_dotenv(".env")
 
     db = PostgresDBProperties(
-        os.getenv("POSTGRES_HOST"),
-        os.getenv("POSTGRES_PORT"),
-        os.getenv("POSTGRES_DB"),
-        os.getenv("POSTGRES_USER"),
-        os.getenv("POSTGRES_PASSWORD"),
+        os.getenv("DW_HOST"),
+        os.getenv("DW_PORT"),
+        os.getenv("DW_DB"),
+        os.getenv("DW_USER"),
+        os.getenv("DW_PASSWORD"),
     )
 
     parser = argparse.ArgumentParser(

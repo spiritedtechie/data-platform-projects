@@ -4,7 +4,7 @@ from pydantic import SecretStr
 from lib.postgres_loader import PostgresDBProperties, load_file_to_database
 
 
-class Postgres(Block):
+class PostgresDataWarehouse(Block):
     host: str
     port: str
     db: str
@@ -26,10 +26,10 @@ class Postgres(Block):
 
     def as_env_properties(self):
         return {
-            "POSTGRES_HOST": self.host,
-            "POSTGRES_PORT": self.port,
-            "POSTGRES_DB": self.db,
-            "POSTGRES_USER": self.user.get_secret_value(),
-            "POSTGRES_PASSWORD": self.password.get_secret_value(),
-            "DBT_ENV_SECRET_POSTGRES_PASSWORD": self.password.get_secret_value(),
+            "DW_HOST": self.host,
+            "DW_PORT": self.port,
+            "DW_DB": self.db,
+            "DW_USER": self.user.get_secret_value(),
+            "DW_PASSWORD": self.password.get_secret_value(),
+            "DBT_ENV_SECRET_DW_PASSWORD": self.password.get_secret_value(),
         }

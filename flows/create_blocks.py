@@ -1,21 +1,21 @@
 import os
 
-from blocks.postgres import Postgres
+from blocks.postgres_dw import PostgresDataWarehouse
 from blocks.soda import Soda
 from dotenv import load_dotenv
 
 load_dotenv()
 
-postgres = Postgres(
-    host=os.environ.get("POSTGRES_HOST"),
-    port=os.environ.get("POSTGRES_PORT"),
-    db=os.environ.get("POSTGRES_DB"),
-    user=os.environ.get("POSTGRES_USER"),
-    password=os.environ.get("POSTGRES_PASSWORD"),
+postgres_dw = PostgresDataWarehouse(
+    host=os.environ.get("DW_HOST"),
+    port=os.environ.get("DW_PORT"),
+    db=os.environ.get("DW_DB"),
+    user=os.environ.get("DW_USER"),
+    password=os.environ.get("DW_PASSWORD"),
 )
 
-uuid = postgres.save("default", overwrite=True)
-slug = postgres.dict().get("block_type_slug")
+uuid = postgres_dw.save("default", overwrite=True)
+slug = postgres_dw.dict().get("block_type_slug")
 print(f"Created block {slug}/default with ID: {uuid}")
 
 

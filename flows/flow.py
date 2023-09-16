@@ -1,4 +1,4 @@
-from blocks.postgres import Postgres
+from blocks.postgres_dw import PostgresDataWarehouse
 from blocks.soda import Soda
 from prefect import flow, task
 from prefect.context import FlowRunContext
@@ -9,13 +9,13 @@ from prefect_dbt import DbtCoreOperation, DbtCliProfile
 
 
 soda = Soda.load("default")
-postgres = Postgres.load("default")
+postgres_dw = PostgresDataWarehouse.load("default")
 
 
 @task
 def load_raw_data_to_store():
-    postgres.load_csv("./datasets/countries.csv", schema="raw")
-    postgres.load_csv("./datasets/invoices.csv", schema="raw")
+    postgres_dw.load_csv("./datasets/countries.csv", schema="raw")
+    postgres_dw.load_csv("./datasets/invoices.csv", schema="raw")
     return None
 
 
@@ -25,7 +25,7 @@ def quality_check(name: str, soda_check: SodaCLCheck, data_source: str = "raw"):
     flow_run_name = flow_run_ctx.flow_run.name
     scan_results_file_path = f"{flow_run_name}.json"
 
-    env = {**postgres.as_env_properties(), **soda.as_env_properties()}
+    env = {**postgres_dw.as_env_properties(), **soda.as_env_properties()}
     soda_configuration = SodaConfiguration(
         configuration_yaml_path="./soda/configuration.yml"
     )
@@ -44,7 +44,7 @@ def quality_check(name: str, soda_check: SodaCLCheck, data_source: str = "raw"):
 
 @task
 def build_models():
-    env = {**postgres.as_env_properties()}
+    env = {**postgres_dw.as_env_properties()}
     dbt_init = DbtCoreOperation(
         commands=["dbt debug", "dbt run"],
         profiles_dir="./dbt",
