@@ -17,4 +17,4 @@ GRANT ALL PRIVILEGES ON DATABASE metabase TO metabase_user;
 \c metabase postgres;
 GRANT ALL ON SCHEMA public TO metabase_user;
 
-CREATE USER debezium SUPERUSER LOGIN PASSWORD 'debezium';
+CREATE USER debezium REPLICATION LOGIN PASSWORD 'debezium';
