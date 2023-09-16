@@ -2,10 +2,12 @@
 
 Exploring data platform technologies:
 
-- Prefect
-- DBT
-- Soda.io
-- Metabase
+- Prefect (Batch Orchestration)
+- DBT (Batch Transform)
+- Soda.io (Data quality checks)
+- Metabase (BI)
+- Debezium (Log-based CDC)
+- Kafka (Event stream storage)
 
 
 ## Running things locally
@@ -50,13 +52,25 @@ dbt run --profiles-dir ..
 ```
 
 
-### Dockerised services
+### Start Docker services
 
 ```
 docker compose build
 docker compose up
 ```
 
-Note: Metabase takes a few minutes to start first time.
+Note: Metabase takes a few minutes to start.
 
-Metabase server: http://localhost:3000
+### New Debezium connector
+
+Define a new config in the `debezium` subdirectory,
+
+```
+./debezium/submit.sh <path to config>
+```
+
+# Service URLs
+- Prefect - http://localhost:4200/dashboard
+- Metabase - http://localhost:3000
+- Kafka UI - http://localhost:8080
+- Debezium Connector UI - http://localhost:8081
