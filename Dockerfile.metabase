@@ -1,1 +1,0 @@
-FROM metabase/metabase
