@@ -134,6 +134,19 @@ services:
     networks:
       - network
     command: server --console-address ":9001" /data
+  
+  minio-create-buckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minio minio123;
+      /usr/bin/mc mb myminio/warehouse;
+      exit 0;
+      "
+    networks:
+      - network
 
   iceberg-catalog:
     image: tabulario/iceberg-rest:0.6.0
@@ -155,7 +168,6 @@ services:
       - network
     depends_on:
       - postgres
-
 
 volumes:
   postgres-volume:
