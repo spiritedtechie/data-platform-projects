@@ -64,7 +64,8 @@ Note: Metabase takes a few minutes to start.
 
 ### New Debezium connector
 
-Define a new config in the `debezium` subdirectory,
+Define the config in the `debezium` subdirectory. Submits the config to debezium connect,
+to start the CDC sourcing and sinking.
 
 ```
 ./debezium/submit.sh <path to config>
@@ -78,6 +79,6 @@ Define a new config in the `debezium` subdirectory,
     - Lots of APIs to inspect connectors, status, tasks: https://docs.confluent.io/platform/current/connect/references/restapi.html
 - Debezium Connector UI - http://localhost:8081
 - Iceberg REST catalog - http://localhost:8181
-    - Table def: http://localhost:8181/v1/namespaces/mytable_dbz/tables/application_db_public_my_products
+    - Table def: http://localhost:8181/v1/namespaces/iceberg/tables/application_db_public_products
     - REST spec: https://github.com/apache/iceberg/blob/master/open-api/rest-catalog-open-api.yaml
 - Minio - http://localhost:9001/login

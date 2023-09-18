@@ -2,7 +2,7 @@
   "name": "Iceberg Sink",
   "config": {
     "connector.class": "com.getindata.kafka.connect.iceberg.sink.IcebergSink",
-    "topics": "application_db.public.my_products",
+    "topics": "application_db.public.products",
     
     "upsert": true,
     "upsert.keep-deletes": true,
