@@ -6,17 +6,19 @@
     
     "upsert": true,
     "upsert.keep-deletes": true,
-
     "allow-field-addition": true,
 
     "table.auto-create": true,
     "table.write-format": "parquet",
-    "table.namespace": "mytable_dbz",
+    "table.namespace": "iceberg",
     "table.prefix": "",
     
-    "iceberg.name": "mycatalog", 
+    "iceberg.name": "icecatalog", 
     "iceberg.catalog-impl": "org.apache.iceberg.rest.RESTCatalog", 
     "iceberg.uri": "http://iceberg-catalog:8181",
+
+    "iceberg.partition.column": "__source_ts",
+    "iceberg.partition.timestamp": "__source_ts_ms",
 
     "iceberg.io-impl": "org.apache.iceberg.aws.s3.S3FileIO",
     "iceberg.s3.endpoint": "http://minio:9000",
