@@ -15,6 +15,7 @@ services:
     command:
       - "postgres"
       - "-c"
+      # Set to allow WAL based CDC
       - "wal_level=logical"
 
   metabase:
@@ -77,10 +78,14 @@ services:
       - network
     environment:
       DYNAMIC_CONFIG_ENABLED: 'true'
-      KAFKA_CLUSTERS_0_NAME: "data-platform-cluster"
+      KAFKA_CLUSTERS_0_NAME: "Data Platform Kafka Cluster"
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      # Point to Debezium Connect
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: Debezium Connect
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://debezium-connect:8083
     depends_on:
       - kafka
+      - debezium-connect
 
   debezium-connect:
     build: 
