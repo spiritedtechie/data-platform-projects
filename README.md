@@ -8,6 +8,8 @@ Exploring data platform technologies:
 - Metabase (BI)
 - Debezium (Log-based CDC)
 - Kafka (Event stream storage)
+- Apache Iceberg (Open table format over file formats e.g. Parquet, Avro)
+- Minio (S3-compatible blob storage service)
 
 
 ## Running things locally
@@ -51,7 +53,6 @@ dbt debug --profiles-dir ..
 dbt run --profiles-dir ..
 ```
 
-
 ### Start Docker services
 
 ```
@@ -73,4 +74,10 @@ Define a new config in the `debezium` subdirectory,
 - Prefect - http://localhost:4200/dashboard
 - Metabase - http://localhost:3000
 - Kafka UI - http://localhost:8080
+- Kafka Connect REST - http://localhost:8083/connectors/
+    - Lots of APIs to inspect connectors, status, tasks: https://docs.confluent.io/platform/current/connect/references/restapi.html
 - Debezium Connector UI - http://localhost:8081
+- Iceberg REST catalog - http://localhost:8181
+    - Table def: http://localhost:8181/v1/namespaces/mytable_dbz/tables/application_db_public_my_products
+    - REST spec: https://github.com/apache/iceberg/blob/master/open-api/rest-catalog-open-api.yaml
+- Minio - http://localhost:9001/login

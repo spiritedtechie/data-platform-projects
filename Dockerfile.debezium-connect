@@ -1,0 +1,6 @@
+FROM debezium/connect:2.3
+
+# Install Apache Iceberg sink
+RUN mkdir -p /kafka/connect/kafka-connect-iceberg-sink
+RUN curl -L https://github.com/getindata/kafka-connect-iceberg-sink/releases/download/0.4.0/kafka-connect-iceberg-sink-0.4.0-plugin.zip > /tmp/kafka-connect-iceberg-sink-0.4.0-plugin.zip
+RUN unzip /tmp/kafka-connect-iceberg-sink-0.4.0-plugin.zip -d /kafka/connect

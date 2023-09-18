@@ -1,0 +1,28 @@
+{
+  "name": "Iceberg Sink",
+  "config": {
+    "connector.class": "com.getindata.kafka.connect.iceberg.sink.IcebergSink",
+    "topics": "application_db.public.my_products",
+    
+    "upsert": true,
+    "upsert.keep-deletes": true,
+
+    "allow-field-addition": true,
+
+    "table.auto-create": true,
+    "table.write-format": "parquet",
+    "table.namespace": "mytable_dbz",
+    "table.prefix": "",
+    
+    "iceberg.name": "mycatalog", 
+    "iceberg.catalog-impl": "org.apache.iceberg.rest.RESTCatalog", 
+    "iceberg.uri": "http://iceberg-catalog:8181",
+
+    "iceberg.io-impl": "org.apache.iceberg.aws.s3.S3FileIO",
+    "iceberg.s3.endpoint": "http://minio:9000",
+    "iceberg.client.region": "eu-west-1",
+    "iceberg.s3.access-key-id": "minio",
+    "iceberg.s3.secret-access-key": "minio123",
+    "iceberg.s3.path-style-access": true
+  }
+}
