@@ -1,7 +1,8 @@
-CREATE DATABASE my_application;
+-- Database for operational application data
+CREATE DATABASE application;
 CREATE USER app_user WITH PASSWORD 'application';
-GRANT ALL PRIVILEGES ON DATABASE my_application TO app_user;
-\c my_application postgres;
+GRANT ALL PRIVILEGES ON DATABASE application TO app_user;
+\c application postgres;
 GRANT ALL ON SCHEMA public TO app_user;
 
 CREATE DATABASE warehouse;
