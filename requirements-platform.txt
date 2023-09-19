@@ -9,3 +9,4 @@ soda-postgres==1.1.10
 prefect==2.13.0
 prefect-soda-core[postgres]==0.1.6
 prefect-dbt[postgres]==0.3.1
+parquet-tools==0.2.14

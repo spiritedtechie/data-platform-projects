@@ -6,7 +6,7 @@ Exploring data platform technologies:
 - DBT (Batch Transform)
 - Soda.io (Data quality checks)
 - Metabase (BI)
-- Debezium (Log-based CDC)
+- Debezium Connect (Kafka Connect with log-based CDC Postgres connector)
 - Kafka (Event stream storage)
 - Apache Iceberg (Open table format over file formats e.g. Parquet, Avro)
 - Minio (S3-compatible blob storage service)
@@ -71,7 +71,21 @@ to start the CDC sourcing and sinking.
 ./debezium/submit.sh <path to config>
 ```
 
-# Service URLs
+### View Parquet and Avro files
+Download files from Minio first.
+
+```
+pip install parquet-tools
+parquet-tools show <path_to_parquet_file>
+```
+
+```
+brew install avro-tools
+avro-tools tojson <path_to_avro_file> | jq
+```
+
+
+## Service URLs
 - Prefect - http://localhost:4200/dashboard
 - Metabase - http://localhost:3000
 - Kafka UI - http://localhost:8080
