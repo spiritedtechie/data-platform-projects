@@ -20,8 +20,6 @@ services:
 
   metabase:
     image: metabase/metabase:latest
-    depends_on:
-      - postgres
     expose:
       - "3001"
     ports:
@@ -35,6 +33,8 @@ services:
       MB_DB_USER: metabase_user
       MB_DB_PASS: metabase
       MB_DB_HOST: postgres
+    depends_on:
+      - postgres
 
   zookeeper:
     image: docker.io/bitnami/zookeeper:3.9
@@ -113,12 +113,12 @@ services:
     platform: linux/x86_64
     ports:
       - "8081:8080"
+    networks:
+      - network
     environment:
       - KAFKA_CONNECT_URIS=http://debezium-connect:8083
     depends_on:
       - debezium-connect
-    networks:
-      - network
 
   minio:
     image: minio/minio
@@ -127,18 +127,16 @@ services:
       - "9001:9001"
     volumes:
       - "./minio-data:/data"
+    networks:
+      - network
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
       MINIO_DOMAIN: minio
-    networks:
-      - network
     command: server --console-address ":9001" /data
   
   minio-create-buckets:
     image: minio/mc
-    depends_on:
-      - minio
     entrypoint: >
       /bin/sh -c "
       /usr/bin/mc alias set myminio http://minio:9000 minio minio123;
@@ -147,6 +145,8 @@ services:
       "
     networks:
       - network
+    depends_on:
+      - minio
 
   iceberg-catalog:
     image: tabulario/iceberg-rest:0.6.0
