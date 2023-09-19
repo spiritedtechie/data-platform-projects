@@ -1,4 +1,11 @@
 services:
+  jupyter:
+    image: jupyter/pyspark-notebook
+    ports:
+      - 8888:8888
+    volumes:
+      - ./jupyter:/home/jovyan/work
+
   postgres:
     image: postgres:15
     restart: always

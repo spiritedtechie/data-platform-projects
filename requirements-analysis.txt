@@ -1,4 +1,0 @@
-jupyter==1.0.0
-plotly==5.16.1
-pandas==2.1.0
-chart-studio
