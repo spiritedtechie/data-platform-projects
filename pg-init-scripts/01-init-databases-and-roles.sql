@@ -19,6 +19,13 @@ GRANT ALL PRIVILEGES ON DATABASE metabase TO metabase_user;
 \c metabase postgres;
 GRANT ALL ON SCHEMA public TO metabase_user;
 
+-- Used for the iceberg catalog
+CREATE DATABASE iceberg_catalog;
+CREATE USER iceberg_user WITH PASSWORD 'iceberg';
+GRANT ALL PRIVILEGES ON DATABASE iceberg_catalog TO iceberg_user;
+\c iceberg_catalog postgres;
+GRANT ALL ON SCHEMA public TO iceberg_user;
+
 -- User for debezium connect to fetch CDC events
 \c postgres postgres;
 CREATE USER debezium SUPERUSER LOGIN PASSWORD 'debezium';
