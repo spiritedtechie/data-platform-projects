@@ -6,10 +6,10 @@ Exploring data platform technologies:
 - DBT (Batch Transform)
 - Soda.io (Data quality checks)
 - Metabase (BI)
-- Debezium Connect (Kafka Connect with log-based CDC Postgres connector)
+- Debezium (Kafka) Connect (log-based CDC Postgres source connector, and Iceberg sink connector)
 - Kafka (Event stream storage)
 - Apache Iceberg (Open table format over file formats e.g. Parquet, Avro)
-- Minio (S3-compatible blob storage service)
+- Minio (S3-compatible blob storage service for storing Iceberg tables/data)
 
 
 ## Running things locally
@@ -92,7 +92,8 @@ avro-tools tojson <path_to_avro_file> | jq
 - Kafka Connect REST - http://localhost:8083/connectors/
     - Lots of APIs to inspect connectors, status, tasks: https://docs.confluent.io/platform/current/connect/references/restapi.html
 - Debezium Connector UI - http://localhost:8081
-- Iceberg REST catalog - http://localhost:8181
+- Iceberg REST Catalog - http://localhost:8181
     - Table def: http://localhost:8181/v1/namespaces/iceberg/tables/application_db_public_products
     - REST spec: https://github.com/apache/iceberg/blob/master/open-api/rest-catalog-open-api.yaml
 - Minio - http://localhost:9001/login
+- Jupyter Notebook Server - http://127.0.0.1:8888/lab
