@@ -12,7 +12,10 @@ services:
       - AWS_ACCESS_KEY_ID=minio
       - AWS_SECRET_ACCESS_KEY=minio123
       - AWS_REGION=eu-west-1
-
+    command:
+      - "start-notebook.sh"
+      - "--NotebookApp.token=''"
+      
   postgres:
     image: postgres:15
     restart: always
