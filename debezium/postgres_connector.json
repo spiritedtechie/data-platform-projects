@@ -3,6 +3,7 @@
   "config": {      
     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
     "connector.displayName": "PostgreSQL",
+    "topic.creation.enable": true,
     "topic.prefix": "application_db",
     "database.hostname": "postgres",
     "database.user": "debezium",

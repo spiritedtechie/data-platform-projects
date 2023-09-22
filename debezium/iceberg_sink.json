@@ -6,13 +6,16 @@
     
     "upsert": true,
     "upsert.keep-deletes": true,
+    "upsert.dedup-column": "__source_ts_ms",
+    "upsert.op-column": "__op",
+
     "allow-field-addition": true,
 
     "table.auto-create": true,
     "table.write-format": "parquet",
     "table.namespace": "iceberg",
     "table.prefix": "",
-    
+
     "iceberg.name": "icecatalog", 
     "iceberg.catalog-impl": "org.apache.iceberg.rest.RESTCatalog", 
     "iceberg.uri": "http://iceberg-catalog:8181",
@@ -21,10 +24,17 @@
     "iceberg.partition.timestamp": "__source_ts_ms",
 
     "iceberg.io-impl": "org.apache.iceberg.aws.s3.S3FileIO",
-    "iceberg.s3.endpoint": "http://minio:9000",
     "iceberg.client.region": "eu-west-1",
+    "iceberg.s3.endpoint": "http://minio:9000",
     "iceberg.s3.access-key-id": "minio",
     "iceberg.s3.secret-access-key": "minio123",
-    "iceberg.s3.path-style-access": true
+    "iceberg.s3.path-style-access": true,
+
+    "transforms": "unwrap",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",   
+    "transforms.unwrap.drop.tombstones": true,
+    "transforms.unwrap.add.fields": "op,table,source.ts_ms,db",
+    "transforms.unwrap.delete.handling.mode": "rewrite"
+
   }
 }
