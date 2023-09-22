@@ -1,0 +1,6 @@
+{
+    "python.analysis.typeCheckingMode": "off",
+    "dbt.profilesDirOverride": "${workspaceFolder}/dbt",
+    "dbt.queryLimit": 500
+
+}
