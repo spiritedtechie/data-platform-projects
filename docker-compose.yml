@@ -1,10 +1,17 @@
 services:
   jupyter:
-    image: jupyter/pyspark-notebook
+    build: 
+      dockerfile: ./Dockerfile.jupyter
     ports:
       - 8888:8888
     volumes:
       - ./jupyter:/home/jovyan/work
+    networks:
+      - network
+    environment:
+      - AWS_ACCESS_KEY_ID=minio
+      - AWS_SECRET_ACCESS_KEY=minio123
+      - AWS_REGION=eu-west-1
 
   postgres:
     image: postgres:15

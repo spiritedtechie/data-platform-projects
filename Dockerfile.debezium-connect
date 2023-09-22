@@ -1,4 +1,4 @@
-FROM debezium/connect:2.3
+FROM debezium/connect:2.3.3.Final
 
 # Install Apache Iceberg sink
 RUN mkdir -p /kafka/connect/kafka-connect-iceberg-sink
