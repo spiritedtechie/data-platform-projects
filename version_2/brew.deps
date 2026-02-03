@@ -1,0 +1,2 @@
+brew install duckdb
+brew install avro-tools

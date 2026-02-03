@@ -63,6 +63,19 @@ services:
       volumes:
         - minio_data:/data
 
+  spark:
+    image: apache/spark:3.5.8-scala2.12-java17-python3-ubuntu
+    container_name: spark
+    networks:
+      - network
+    depends_on:
+      - kafka
+      - minio
+    volumes:
+      - ./spark-app:/opt/spark-app
+      - ./spark-warehouse:/opt/spark-warehouse
+    command: ["sleep", "infinity"]
+
 volumes:
   kafka_data:
   minio_data:
