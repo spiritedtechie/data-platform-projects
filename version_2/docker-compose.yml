@@ -49,19 +49,19 @@ services:
       - kafka
 
   minio:
-      image: minio/minio:latest
-      container_name: minio
-      command: server /data --console-address ":9001"
-      ports:
-        - "9000:9000"  # S3 API
-        - "9001:9001"  # Console UI
-      networks:
-      - network
-      environment:
-        - MINIO_ROOT_USER=minioadmin
-        - MINIO_ROOT_PASSWORD=minioadmin123
-      volumes:
-        - minio_data:/data
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Console UI
+    networks:
+    - network
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+    volumes:
+      - minio_data:/data
 
   spark:
     image: apache/spark:3.5.8-scala2.12-java17-python3-ubuntu
@@ -76,6 +76,21 @@ services:
       - ./spark-warehouse:/opt/spark-warehouse
     command: ["sleep", "infinity"]
 
+  duckdb:
+    image: duckdb/duckdb:latest
+    container_name: duckdb
+    stdin_open: true
+    tty: true
+    networks:
+      - network
+    volumes:
+      - ./duckdb/init.sql:/init.sql:ro
+    depends_on:
+      - minio  
+    environment:
+      S3_ENDPOINT: minio:9000
+
+  
 volumes:
   kafka_data:
   minio_data:

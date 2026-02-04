@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Ensure the docker containers are running via docker-compose i.e. `docker-compose up -d`
 
-APP_PATH="${1:-/opt/spark-app/tfl_line_status_kafka_to_iceberg_bronze.py}"
+APP_PATH="${1}"
 
 docker exec -it spark bash -lc "
   /opt/spark/bin/spark-submit \

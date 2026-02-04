@@ -12,7 +12,7 @@ CHECKPOINT = "s3a://lake/checkpoints/bronze/tfl_raw_line_status"
 
 
 spark = SparkSession.builder.appName(
-    "tfl-line-status-kafka-to-iceberg-bronze"
+    "tfl-line-status-kafka-to-bronze"
 ).getOrCreate()
 
 spark.sql(f"CREATE NAMESPACE IF NOT EXISTS {CATALOG}.{NAMESPACE}")

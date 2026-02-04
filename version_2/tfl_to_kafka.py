@@ -1,3 +1,10 @@
+# The purpose of this script is to fetch Transport for London (TfL) line status data
+# and severity metadata from the TfL API and publish it to specified Kafka topics.
+# It is designed to be run as a single micro-batch process, fetching the latest data
+# and sending it to Kafka for further processing downstream. It pulls a snapshot of the
+# current line statuses and severity metadata, encapsulates them in structured envelopes,
+# and ensures reliable delivery to Kafka with retries and logging.
+
 from __future__ import annotations
 
 import argparse
