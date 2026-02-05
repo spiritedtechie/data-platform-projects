@@ -23,5 +23,11 @@ com.amazonaws:aws-java-sdk-bundle:1.12.262 \
     --conf spark.hadoop.fs.s3a.path.style.access=true \
     --conf spark.hadoop.fs.s3a.connection.ssl.enabled=false \
     --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem \
+    --conf spark.driver.memory=512m \
+    --conf spark.executor.memory=512m \
+    --conf spark.executor.cores=1 \
+    --conf spark.sql.shuffle.partitions=6 \
+    --conf spark.default.parallelism=6 \
+    --conf spark.sql.streaming.maxOffsetsPerTrigger=5000 \
     ${APP_PATH}
 "

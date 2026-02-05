@@ -30,7 +30,8 @@ Or use DuckDB UI:
 ```
 S3_ENDPOINT="localhost:9000" duckdb --ui --init ./duckdb/init.sql 
 
-# In a session 
+# In a UI notebook 
+
 
 select * from tfl_line_status_events;
 

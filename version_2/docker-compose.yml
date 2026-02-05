@@ -9,6 +9,7 @@ services:
     networks:
       - network
     environment:
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx256m"
       CLUSTER_ID: fb0PhypcS4ml4qBptAIHXw # Pre-generated UUID for KRaft mode
 
       # ---- KRaft mode ----
@@ -24,7 +25,10 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
 
       # ---- Dev-friendly defaults ----
-      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_LOG_RETENTION_HOURS: 1
+      KAFKA_LOG_SEGMENT_BYTES: 134217728   # 128MB
+      KAFKA_LOG_RETENTION_BYTES: 268435456 # 256MB
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -43,6 +47,7 @@ services:
     networks:
       - network
     environment:
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx128m
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
     depends_on:
@@ -64,6 +69,8 @@ services:
       - minio_data:/data
 
   spark:
+    mem_limit: 2.5g
+    cpus: 2.0
     image: apache/spark:3.5.8-scala2.12-java17-python3-ubuntu
     container_name: spark
     networks:
@@ -74,6 +81,7 @@ services:
     volumes:
       - ./spark-app:/opt/spark-app
       - ./spark-warehouse:/opt/spark-warehouse
+      - ./spark-conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
     command: ["sleep", "infinity"]
 
   duckdb:
