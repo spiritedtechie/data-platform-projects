@@ -18,17 +18,17 @@ SET GLOBAL s3_secret_access_key='minioadmin123';
 CREATE OR REPLACE VIEW raw_tfl_line_status AS
 SELECT *
 FROM iceberg_scan(
-  's3://lake/warehouse/bronze/tfl_raw_line_status/metadata/v10.metadata.json'
+  's3://lake/warehouse/bronze/tfl_raw_line_status/metadata/v11.metadata.json'
 );
 
 CREATE OR REPLACE VIEW tfl_line_status_events AS
 SELECT *
 FROM iceberg_scan(
-  's3://lake/warehouse/silver/tfl_line_status_events/metadata/v5.metadata.json'
+  's3://lake/warehouse/silver/tfl_line_status_events/metadata/v6.metadata.json'
 );
 
 CREATE OR REPLACE VIEW tfl_disruption_events AS
 SELECT *
 FROM iceberg_scan(
-  's3://lake/warehouse/silver/tfl_disruption_events/metadata/v5.metadata.json'
+  's3://lake/warehouse/silver/tfl_disruption_events/metadata/v6.metadata.json'
 );

@@ -305,9 +305,8 @@ def process_batch(bronze_batch_df: DataFrame, batch_id: int):
             ),
         )
         .withColumn(
-            # Prefer valid_from for event_time if present
             "event_time",
-            coalesce(col("valid_from"), col("base_event_time")),
+            col("base_event_time"),
         )
     )
 
