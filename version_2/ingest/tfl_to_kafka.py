@@ -81,7 +81,7 @@ class Settings:
     @staticmethod
     def from_env_and_args(args: argparse.Namespace) -> "Settings":
         kafka_bootstrap = (
-            args.kafka_bootstrap or os.environ.get("KAFKA_BOOTSTRAP", "localhost:9092")
+            args.kafka_bootstrap or os.environ.get("KAFKA_BOOTSTRAP", "kafka:29092")
         ).strip()
         if not kafka_bootstrap:
             raise TfLIngestError(
