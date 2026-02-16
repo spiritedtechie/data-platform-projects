@@ -23,7 +23,11 @@ docker run --network version_2_network --rm --env-file ingest/.env library/tfl-t
 crontab -e
 ```
 
+To run a spark job:
 
+```
+sh submit_spark_job.sh /opt/spark-app/tfl_line_status_raw_s3.py
+```
 
 
 View a Parquet file:
