@@ -6,8 +6,8 @@ docker-compose up -d
 
 Check the following UI interfaces are accessible:
 
-- https://localhost:8080 - kafka ui
-- https://localhost:9001 - minio/s3
+- http://localhost:8080 - kafka ui
+- http://localhost:9001 - minio/s3
 
 
 
@@ -15,9 +15,9 @@ Check the following UI interfaces are accessible:
 Build and run the container for the scheduled ingest job:
 
 ```
-docker build -f ingest/Dockerfile -t tfl-to-kakfa-job ingest
+docker build -f ingest/Dockerfile -t tfl-to-kafka-job ingest
 
-docker run --network version_2_network --rm --env-file ingest/.env library/tfl-to-kafka-job
+docker run --network version_2_network --rm --env-file ingest/.env tfl-to-kafka-job
 
 # The above command can be added to crontab for scheduling
 crontab -e
@@ -27,6 +27,9 @@ To run a spark job:
 
 ```
 sh submit_spark_job.sh /opt/spark-app/tfl_line_status_raw_s3.py
+sh submit_spark_job.sh /opt/spark-app/tfl_line_status_bronze.py
+sh submit_spark_job.sh /opt/spark-app/tfl_line_status_silver.py
+sh submit_spark_job.sh /opt/spark-app/tfl_line_status_gold_kimball_star.py
 ```
 
 
@@ -65,8 +68,6 @@ S3_ENDPOINT="localhost:9000" duckdb --ui --init ./duckdb/init.sql
 select * from tfl_line_status_events;
 
 ```
-
-
 
 
 

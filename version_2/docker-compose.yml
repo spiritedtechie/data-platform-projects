@@ -80,7 +80,6 @@ services:
       - minio
     volumes:
       - ./spark-app:/opt/spark-app
-      - ./spark-warehouse:/opt/spark-warehouse
       - ./spark-conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
     command: ["sleep", "infinity"]
 

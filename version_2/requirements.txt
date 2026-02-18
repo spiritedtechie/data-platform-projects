@@ -1,6 +1,2 @@
-confluent-kafka 
-httpx 
-tenacity
-
+-r ingest/requirements.txt
 pyspark
-fastavro

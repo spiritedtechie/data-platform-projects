@@ -1,1 +1,6 @@
 ideas.md
+ingest/.env
+ingest/logs/
+spark-app/__pycache__/
+spark-warehouse/
+*.pyc
