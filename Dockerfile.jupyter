@@ -1,9 +1,0 @@
-FROM jupyter/pyspark-notebook
-
-USER root
-WORKDIR ${SPARK_HOME}/jars
-RUN curl -o iceberg-spark-runtime-3.3_2.12-1.3.1.jar https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.3_2.12/1.3.1/iceberg-spark-runtime-3.3_2.12-1.3.1.jar
-RUN curl -o software-amazon-awssdk-bundle-2.20.150.jar https://repo1.maven.org/maven2/software/amazon/awssdk/bundle/2.20.150/bundle-2.20.150.jar
-
-USER ${NB_UID}
-WORKDIR "${HOME}"
