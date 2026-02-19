@@ -64,32 +64,7 @@ TABLE_SPECS = {
             ("reason", "STRING"),
             ("valid_from", "TIMESTAMP"),
             ("valid_to", "TIMESTAMP"),
-            ("is_now", "BOOLEAN"),
             ("is_disrupted", "BOOLEAN"),
-            ("payload_hash", "STRING"),
-            ("bronze_kafka_topic", "STRING"),
-            ("bronze_kafka_partition", "INT"),
-            ("bronze_kafka_offset", "BIGINT"),
-            ("bronze_kafka_ts", "TIMESTAMP"),
-            ("bronze_kafka_key", "STRING"),
-            ("producer_ingest_ts", "TIMESTAMP"),
-            ("producer_request_id", "STRING"),
-            ("schema_version", "INT"),
-        ],
-        "partition_by": "days(event_ts)",
-    },
-    "tfl_disruption_events": {
-        "namespace": SILVER_NS,
-        "columns": [
-            ("event_id", "STRING"),
-            ("event_ts", "TIMESTAMP"),
-            ("ingest_ts", "TIMESTAMP"),
-            ("line_id", "STRING"),
-            ("disruption_id", "STRING"),
-            ("category", "STRING"),
-            ("category_desc", "STRING"),
-            ("closure_text", "STRING"),
-            ("description", "STRING"),
             ("payload_hash", "STRING"),
             ("bronze_kafka_topic", "STRING"),
             ("bronze_kafka_partition", "INT"),
@@ -139,7 +114,6 @@ def columns_from_spec(table_name: str) -> list[str]:
 
 
 STATUS_EVENT_COLS = columns_from_spec("tfl_line_status_events")
-DISRUPTION_EVENT_COLS = columns_from_spec("tfl_disruption_events")
 QUARANTINE_COLS = columns_from_spec("tfl_bad_records")
 DQ_METRIC_COLS = columns_from_spec("dq_metrics")
 
@@ -158,6 +132,7 @@ def create_table_sql(catalog: str, table_name: str, spec: dict) -> str:
         f"{partition_sql}\n"
         f"TBLPROPERTIES ({props_sql})"
     )
+
 
 # ----------------------------
 # Spark session (Iceberg extensions configured in spark-submit)
@@ -184,16 +159,6 @@ validity_schema = StructType(
     [
         StructField("fromDate", StringType(), True),
         StructField("toDate", StringType(), True),
-        StructField("isNow", StringType(), True),  # sometimes boolean; keep string-safe
-    ]
-)
-
-disruption_schema = StructType(
-    [
-        StructField("category", StringType(), True),
-        StructField("categoryDescription", StringType(), True),
-        StructField("closureText", StringType(), True),
-        StructField("description", StringType(), True),
     ]
 )
 
@@ -204,7 +169,6 @@ line_status_schema = StructType(
         StructField("statusSeverity", IntegerType(), True),
         StructField("statusSeverityDescription", StringType(), True),
         StructField("reason", StringType(), True),
-        StructField("disruption", disruption_schema, True),
         StructField("validityPeriods", ArrayType(validity_schema), True),
     ]
 )
@@ -268,7 +232,9 @@ def merge_into_table(
     update_sql = ""
     if update_cols:
         assignments = ",\n              ".join([f"{c} = s.{c}" for c in update_cols])
-        update_sql = f"\n            WHEN MATCHED THEN UPDATE SET\n              {assignments}"
+        update_sql = (
+            f"\n            WHEN MATCHED THEN UPDATE SET\n              {assignments}"
+        )
 
     df.createOrReplaceTempView(temp_view)
     try:
@@ -298,7 +264,9 @@ def select_bronze_batch(bronze_batch_df: DataFrame) -> DataFrame:
     )
 
 
-def parse_envelopes(bronze_selected_df: DataFrame, measured_at) -> tuple[DataFrame, DataFrame]:
+def parse_envelopes(
+    bronze_selected_df: DataFrame, measured_at
+) -> tuple[DataFrame, DataFrame]:
     parsed = bronze_selected_df.withColumn(
         "env", from_json(col("bronze_payload"), envelope_schema)
     ).persist(StorageLevel.MEMORY_AND_DISK)
@@ -342,7 +310,6 @@ def build_statuses(good_env: DataFrame) -> DataFrame:
             col("status.statusSeverityDescription").alias("status_desc"),
             col("status.reason").alias("reason"),
             col("status.validityPeriods").alias("validity_periods"),
-            col("status.disruption").alias("disruption"),
             col("bronze_kafka_topic"),
             col("bronze_kafka_partition"),
             col("bronze_kafka_offset"),
@@ -368,27 +335,15 @@ def build_statuses(good_env: DataFrame) -> DataFrame:
     )
     return (
         statuses.withColumn(
-            "vp_now",
-            expr("filter(validity_periods, x -> lower(cast(x.isNow as string)) = 'true')"),
-        )
-        .withColumn(
             "vp_pick",
             expr(
                 "CASE "
-                "WHEN size(vp_now) > 0 THEN vp_now[0] "
                 "WHEN size(validity_periods) > 0 THEN validity_periods[0] "
                 "ELSE NULL END"
             ),
         )
         .withColumn("valid_from", parse_iso_ts(col("vp_pick.fromDate")))
         .withColumn("valid_to", parse_iso_ts(col("vp_pick.toDate")))
-        .withColumn(
-            "is_now",
-            expr(
-                "CASE WHEN vp_pick IS NULL THEN false "
-                "ELSE lower(cast(vp_pick.isNow as string)) = 'true' END"
-            ),
-        )
         .withColumn(
             "is_disrupted",
             expr(
@@ -433,37 +388,6 @@ def build_status_events(good_status: DataFrame) -> DataFrame:
     )
 
 
-def build_disruption_events(statuses: DataFrame) -> DataFrame:
-    return (
-        statuses.filter(col("disruption").isNotNull() & col("line_id").isNotNull())
-        .withColumn("category", col("disruption.category"))
-        .withColumn("category_desc", col("disruption.categoryDescription"))
-        .withColumn("closure_text", col("disruption.closureText"))
-        .withColumn("description", col("disruption.description"))
-        .withColumn(
-            "disruption_id",
-            xxhash64(
-                col("line_id"),
-                coalesce(col("category"), lit("")),
-                coalesce(col("closure_text"), lit("")),
-                coalesce(col("description"), lit("")),
-                col("event_ts").cast("string"),
-            ).cast("string"),
-        )
-        .withColumn(
-            "event_id",
-            xxhash64(
-                col("bronze_kafka_topic"),
-                col("bronze_kafka_partition"),
-                col("bronze_kafka_offset"),
-                col("disruption_id"),
-            ).cast("string"),
-        )
-        .select(*DISRUPTION_EVENT_COLS)
-        .dropDuplicates(["event_id"])
-    )
-
-
 def write_quarantine(
     ss: SparkSession,
     parse_fail: DataFrame,
@@ -493,7 +417,6 @@ def write_quarantine(
 def write_silver_events(
     ss: SparkSession,
     status_events_out: DataFrame,
-    disruption_events_out: DataFrame,
     batch_id: int,
 ):
     merge_into_table(
@@ -510,22 +433,6 @@ def write_silver_events(
         ),
         insert_cols=STATUS_EVENT_COLS,
         temp_prefix="tmp_status",
-        run_id=RUN_ID,
-        batch_id=batch_id,
-    )
-    merge_into_table(
-        ss=ss,
-        df=disruption_events_out.select(*DISRUPTION_EVENT_COLS),
-        table_fqn=f"{CATALOG}.{SILVER_NS}.tfl_disruption_events",
-        on_clause=(
-            "t.bronze_kafka_topic = s.bronze_kafka_topic "
-            "AND t.bronze_kafka_partition = s.bronze_kafka_partition "
-            "AND t.bronze_kafka_offset = s.bronze_kafka_offset "
-            "AND t.line_id = s.line_id "
-            "AND t.disruption_id = s.disruption_id"
-        ),
-        insert_cols=DISRUPTION_EVENT_COLS,
-        temp_prefix="tmp_disruption",
         run_id=RUN_ID,
         batch_id=batch_id,
     )
@@ -546,7 +453,9 @@ def write_dq_metrics(
             "null_status_severity"
         ),
         fsum(
-            expr("CASE WHEN line_id IS NULL OR status_severity IS NULL THEN 1 ELSE 0 END")
+            expr(
+                "CASE WHEN line_id IS NULL OR status_severity IS NULL THEN 1 ELSE 0 END"
+            )
         ).alias("bad_rows"),
         fmin(col("event_ts")).alias("min_event_ts"),
         fmax(col("event_ts")).alias("max_event_ts"),
@@ -605,9 +514,8 @@ def process_batch(bronze_batch_df: DataFrame, batch_id: int):
         )
         bad_required = build_bad_required(bad_status, measured_at)
         status_events_out = build_status_events(good_status)
-        disruption_events_out = build_disruption_events(statuses)
         write_quarantine(ss, parse_fail, bad_required, batch_id)
-        write_silver_events(ss, status_events_out, disruption_events_out, batch_id)
+        write_silver_events(ss, status_events_out, batch_id)
         write_dq_metrics(ss, statuses, parse_fail, measured_at, batch_id)
     finally:
         statuses.unpersist()

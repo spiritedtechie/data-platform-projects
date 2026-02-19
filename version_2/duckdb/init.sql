@@ -22,10 +22,6 @@ CREATE OR REPLACE VIEW silver_tfl_line_status_events AS
 SELECT *
 FROM iceberg_scan('s3://lake/warehouse/silver/tfl_line_status_events');
 
-CREATE OR REPLACE VIEW silver_tfl_disruption_events AS
-SELECT *
-FROM iceberg_scan('s3://lake/warehouse/silver/tfl_disruption_events');
-
 CREATE OR REPLACE VIEW tfl_quarantine AS
 SELECT *
 FROM iceberg_scan('s3://lake/warehouse/quarantine/tfl_bad_records');

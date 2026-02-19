@@ -4,3 +4,4 @@ ingest/logs/
 spark-app/__pycache__/
 spark-warehouse/
 *.pyc
+.tmp
