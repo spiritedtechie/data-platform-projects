@@ -1,0 +1,13 @@
+{
+  "name": "data-platform-projects",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "USER_UID": "501",
+      "USER_GID": "20"
+    }
+  },
+  "postCreateCommand": "sudo chown $(id -u):$(id -g) /workspaces/data-platform-projects",
+  "remoteUser": "vscode",
+  "containerUser": "vscode"
+}
