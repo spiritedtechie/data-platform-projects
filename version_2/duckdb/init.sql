@@ -3,7 +3,7 @@ LOAD httpfs;
 INSTALL iceberg;
 LOAD iceberg;
 
-SET GLOBAL memory_limit='256MB';
+SET GLOBAL memory_limit='512MB';
 
 SET GLOBAL s3_region='us-east-1';
 SET GLOBAL s3_endpoint=getenv('S3_ENDPOINT');
@@ -13,7 +13,7 @@ SET GLOBAL s3_url_style='path';
 SET GLOBAL s3_access_key_id='minioadmin';
 SET GLOBAL s3_secret_access_key='minioadmin123';
 
--- Convenience views
+-- Bronze / Silver
 CREATE OR REPLACE VIEW bronze_tfl_line_status AS
 SELECT *
 FROM iceberg_scan('s3://lake/warehouse/bronze/tfl_line_status');

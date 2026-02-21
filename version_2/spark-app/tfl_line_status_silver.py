@@ -58,7 +58,6 @@ TABLE_SPECS = {
             ("line_id", "STRING"),
             ("line_name", "STRING"),
             ("mode", "STRING"),
-            ("status_id", "BIGINT"),
             ("status_severity", "INT"),
             ("status_desc", "STRING"),
             ("reason", "STRING"),
@@ -152,6 +151,11 @@ spark.sql(f"CREATE NAMESPACE IF NOT EXISTS {CATALOG}.{QUAR_NS}")
 for table_name, table_spec in TABLE_SPECS.items():
     spark.sql(create_table_sql(CATALOG, table_name, table_spec))
 
+# Backward-compatible schema cleanup for existing deployments.
+silver_events_fqn = f"{CATALOG}.{SILVER_NS}.tfl_line_status_events"
+if "status_id" in spark.table(silver_events_fqn).columns:
+    spark.sql(f"ALTER TABLE {silver_events_fqn} DROP COLUMN status_id")
+
 # ----------------------------
 # Schemas for parsing JSON payload (define all nested structs/arrays)
 # ----------------------------
@@ -164,7 +168,6 @@ validity_schema = StructType(
 
 line_status_schema = StructType(
     [
-        StructField("id", LongType(), True),
         StructField("lineId", StringType(), True),
         StructField("statusSeverity", IntegerType(), True),
         StructField("statusSeverityDescription", StringType(), True),
@@ -305,7 +308,6 @@ def build_statuses(good_env: DataFrame) -> DataFrame:
             col("line.id").alias("line_id"),
             col("line.name").alias("line_name"),
             col("line.modeName").alias("mode"),
-            col("status.id").cast("bigint").alias("status_id"),
             col("status.statusSeverity").alias("status_severity"),
             col("status.statusSeverityDescription").alias("status_desc"),
             col("status.reason").alias("reason"),
@@ -328,7 +330,6 @@ def build_statuses(good_env: DataFrame) -> DataFrame:
                 col("bronze_kafka_partition"),
                 col("bronze_kafka_offset"),
                 col("line_id"),
-                col("status_id"),
                 col("status_severity"),
             ).cast("string"),
         )
@@ -382,7 +383,6 @@ def build_status_events(good_status: DataFrame) -> DataFrame:
             "bronze_kafka_partition",
             "bronze_kafka_offset",
             "line_id",
-            "status_id",
             "status_severity",
         ]
     )
@@ -428,7 +428,6 @@ def write_silver_events(
             "AND t.bronze_kafka_partition = s.bronze_kafka_partition "
             "AND t.bronze_kafka_offset = s.bronze_kafka_offset "
             "AND t.line_id = s.line_id "
-            "AND t.status_id <=> s.status_id "
             "AND t.status_severity <=> s.status_severity"
         ),
         insert_cols=STATUS_EVENT_COLS,
