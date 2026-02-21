@@ -286,10 +286,13 @@ def parse_envelopes(
     return parsed, parse_fail
 
 
-def build_statuses(good_env: DataFrame) -> DataFrame:
+def build_statuses(good_env: DataFrame, measured_at) -> DataFrame:
     env_norm = (
         good_env.withColumn(
-            "event_ts", coalesce(col("bronze_kafka_ts"), col("bronze_ingest_ts"))
+            "event_ts",
+            coalesce(
+                parse_iso_ts(col("env.ingested_at")), col("bronze_kafka_ts"), col("bronze_ingest_ts")
+            ),
         )
         .withColumn("producer_ingest_ts", parse_iso_ts(col("env.ingested_at")))
         .withColumn("producer_request_id", col("env.request_id"))
@@ -304,7 +307,7 @@ def build_statuses(good_env: DataFrame) -> DataFrame:
         lines.withColumn("status", explode_outer(col("line.lineStatuses")))
         .select(
             col("event_ts"),
-            col("bronze_ingest_ts").alias("ingest_ts"),
+            measured_at.alias("ingest_ts"),
             col("line.id").alias("line_id"),
             col("line.name").alias("line_name"),
             col("line.modeName").alias("mode"),
@@ -312,6 +315,7 @@ def build_statuses(good_env: DataFrame) -> DataFrame:
             col("status.statusSeverityDescription").alias("status_desc"),
             col("status.reason").alias("reason"),
             col("status.validityPeriods").alias("validity_periods"),
+            col("bronze_ingest_ts"),
             col("bronze_kafka_topic"),
             col("bronze_kafka_partition"),
             col("bronze_kafka_offset"),
@@ -358,7 +362,7 @@ def build_statuses(good_env: DataFrame) -> DataFrame:
 
 def build_bad_required(bad_status: DataFrame, measured_at) -> DataFrame:
     return bad_status.select(
-        col("ingest_ts"),
+        col("bronze_ingest_ts").alias("ingest_ts"),
         col("bronze_kafka_topic").alias("kafka_topic"),
         col("bronze_kafka_partition").alias("kafka_partition"),
         col("bronze_kafka_offset").alias("kafka_offset"),
@@ -503,7 +507,7 @@ def process_batch(bronze_batch_df: DataFrame, batch_id: int):
 
     bronze_selected = select_bronze_batch(bronze_batch_df)
     parsed, parse_fail = parse_envelopes(bronze_selected, measured_at)
-    statuses = build_statuses(parsed.filter(col("env").isNotNull()))
+    statuses = build_statuses(parsed.filter(col("env").isNotNull()), measured_at)
     try:
         good_status = statuses.filter(
             col("line_id").isNotNull() & col("status_severity").isNotNull()
