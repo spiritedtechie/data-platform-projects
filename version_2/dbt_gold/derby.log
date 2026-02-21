@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Mon Feb 23 16:11:39 GMT 2026:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-019c-8b45-48ad-0000016a79f0 
+on database directory /Users/vijay/source/data-platform-projects/version_2/dbt_gold/metastore_db with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@5ffd2b27 
+Loaded from file:/Users/vijay/.pyenv/versions/3.13.12/envs/data-platform-projects/lib/python3.13/site-packages/pyspark/jars/derby-10.14.2.0.jar
+java.vendor=Oracle Corporation
+java.runtime.version=20.0.2+9-78
+user.dir=/Users/vijay/source/data-platform-projects/version_2/dbt_gold
+os.name=Mac OS X
+os.arch=aarch64
+os.version=26.3
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''

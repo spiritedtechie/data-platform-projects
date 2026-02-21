@@ -21,3 +21,6 @@ test:
 
 lint:
 	@$(PYTHON) -m sqlfluff lint models --config .sqlfluff
+	
+ci:
+	@bash scripts/ci.sh

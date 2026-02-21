@@ -13,3 +13,6 @@ dbt_gold/target/
 dbt_gold/logs/
 dbt_gold/dbt_packages/
 dbt_gold/profiles.yml
+
+ml/artifacts/
+ml/scores/

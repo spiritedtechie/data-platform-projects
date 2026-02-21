@@ -24,3 +24,5 @@ models:
       +schema: gold
     marts:
       +schema: gold
+    ml:
+      +schema: gold

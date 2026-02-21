@@ -9,5 +9,16 @@
   },
   "postCreateCommand": "sudo chown $(id -u):$(id -g) /workspaces/data-platform-projects",
   "remoteUser": "vscode",
-  "containerUser": "vscode"
+  "containerUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "openai.chatgpt",
+        "dbtlabsinc.dbt",
+        "henriblancke.vscode-dbt-formatter",
+        "ms-python.python",
+        "ms-python.debugpy"
+      ]
+    }
+  }
 }
