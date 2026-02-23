@@ -6,7 +6,7 @@ from pyspark.sql.functions import (
     from_json,
     explode_outer,
     coalesce,
-    to_timestamp,
+    try_to_timestamp,
     expr,
     count as fcount,
     sum as fsum,
@@ -209,12 +209,15 @@ envelope_schema = StructType(
 # ----------------------------
 def parse_iso_ts(c):
     # TfL and producer timestamps can arrive in multiple ISO-8601 variants.
+    c_str = c.cast("string")
     return coalesce(
-        to_timestamp(c, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
-        to_timestamp(c, "yyyy-MM-dd'T'HH:mm:ssXXX"),
-        to_timestamp(c, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
-        to_timestamp(c, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
-        to_timestamp(c),
+        try_to_timestamp(c_str, lit("yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX")),
+        try_to_timestamp(c_str, lit("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")),
+        try_to_timestamp(c_str, lit("yyyy-MM-dd'T'HH:mm:ssXXX")),
+        try_to_timestamp(c_str, lit("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")),
+        try_to_timestamp(c_str, lit("yyyy-MM-dd'T'HH:mm:ss.SSS")),
+        try_to_timestamp(c_str, lit("yyyy-MM-dd'T'HH:mm:ss")),
+        try_to_timestamp(c_str),
     )
 
 
@@ -256,11 +259,11 @@ def merge_into_table(
 
 def select_bronze_batch(bronze_batch_df: DataFrame) -> DataFrame:
     return bronze_batch_df.select(
-        col("ingest_ts").cast("timestamp").alias("bronze_ingest_ts"),
+        parse_iso_ts(col("ingest_ts")).alias("bronze_ingest_ts"),
         col("kafka_topic").alias("bronze_kafka_topic"),
         col("kafka_partition").cast("int").alias("bronze_kafka_partition"),
         col("kafka_offset").cast("bigint").alias("bronze_kafka_offset"),
-        col("kafka_ts").cast("timestamp").alias("bronze_kafka_ts"),
+        parse_iso_ts(col("kafka_ts")).alias("bronze_kafka_ts"),
         col("kafka_key").cast("string").alias("bronze_kafka_key"),
         col("payload").cast("string").alias("bronze_payload"),
         col("payload_hash").cast("string").alias("bronze_payload_hash"),

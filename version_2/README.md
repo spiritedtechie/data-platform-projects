@@ -25,11 +25,11 @@ crontab -e
 
 To run a spark job:
 
-```
-sh submit_spark_job.sh /opt/spark-app/tfl_line_status_raw_s3.py
-sh submit_spark_job.sh /opt/spark-app/tfl_line_status_bronze.py
-sh submit_spark_job.sh /opt/spark-app/tfl_line_status_silver.py
-sh submit_spark_job.sh /opt/spark-app/tfl_line_status_gold_kimball_star.py
+```bash
+sh submit_spark_job.sh spark-app/tfl_line_status_raw_s3.py
+sh submit_spark_job.sh spark-app/tfl_line_status_bronze.py
+sh submit_spark_job.sh spark-app/tfl_line_status_silver.py
+sh submit_spark_job.sh spark-app/tfl_line_status_gold_batch.py
 ```
 
 

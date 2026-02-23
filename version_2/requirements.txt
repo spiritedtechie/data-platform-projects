@@ -1,2 +1,2 @@
 -r ingest/requirements.txt
-pyspark
+pyspark=4.1.1

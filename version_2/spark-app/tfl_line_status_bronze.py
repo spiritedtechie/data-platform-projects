@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, current_timestamp, sha2
 
-KAFKA_BOOTSTRAP = "kafka:29092"  # internal listener on docker network
+KAFKA_BOOTSTRAP = "localhost:9092"  # internal listener on docker network
 TOPIC = "tfl.raw.line_status"
 
 CATALOG = "local"

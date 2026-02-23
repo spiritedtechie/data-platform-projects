@@ -68,21 +68,6 @@ services:
     volumes:
       - minio_data:/data
 
-  spark:
-    mem_limit: 2.5g
-    cpus: 2.0
-    image: apache/spark:3.5.8-scala2.12-java17-python3-ubuntu
-    container_name: spark
-    networks:
-      - network
-    depends_on:
-      - kafka
-      - minio
-    volumes:
-      - ./spark-app:/opt/spark-app
-      - ./spark-conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
-    command: ["sleep", "infinity"]
-
   duckdb:
     image: duckdb/duckdb:latest
     container_name: duckdb
