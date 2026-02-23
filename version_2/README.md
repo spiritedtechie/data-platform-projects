@@ -31,7 +31,9 @@ sh submit_spark_job.sh spark-app/tfl_line_status_gold_batch.py
 ```bash
 cd version_2/dbt_gold
 python -m pip install -r requirements.txt
-export DBT_TFL_SILVER_EVENTS_RELATION=local.silver.tfl_line_status_events
+export DBT_TARGET_SCHEMA='gold'
+export DBT_TFL_SILVER_SCHEMA='silver'
+export DBT_TFL_SILVER_IDENTIFIER='tfl_line_status_events'
 
 dbt run
 dbt test

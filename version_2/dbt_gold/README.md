@@ -38,8 +38,12 @@ Run from `version_2/dbt_gold`:
 ```bash
 dbt debug --profiles-dir .
 dbt parse --profiles-dir .
+
 dbt source freshness --profiles-dir .
+
+dbt run --profiles-dir .
 dbt test --profiles-dir .
+
 dbt build --profiles-dir .
 dbt build --full-refresh --profiles-dir .
 ```
