@@ -1,2 +1,3 @@
 -r ingest/requirements.txt
-pyspark=4.1.1
+-r dbt_gold/requirements.txt
+pyspark==4.1.1

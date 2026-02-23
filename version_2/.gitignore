@@ -5,3 +5,11 @@ spark-app/__pycache__/
 spark-warehouse/
 *.pyc
 .tmp
+
+# dbt local build artifacts
+derby.log
+metastore_db
+dbt_gold/target/
+dbt_gold/logs/
+dbt_gold/dbt_packages/
+dbt_gold/profiles.yml

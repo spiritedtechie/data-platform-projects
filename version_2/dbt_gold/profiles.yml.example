@@ -1,0 +1,29 @@
+tfl_gold:
+  target: dev
+  outputs:
+    dev:
+      type: spark
+      method: session
+      host: localhost
+      schema: "{{ env_var('DBT_TARGET_SCHEMA', 'gold') }}"
+      threads: 4
+      connect_retries: 2
+      connect_timeout: 60
+
+      server_side_parameters:
+        spark.app.name: dbt-tfl-gold
+        spark.jars.packages: "org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:1.10.1,org.apache.hadoop:hadoop-aws:3.4.1"
+        spark.jars.ivy: /tmp/.ivy2
+        spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
+        spark.sql.defaultCatalog: local
+        spark.sql.catalog.local: org.apache.iceberg.spark.SparkCatalog
+        spark.sql.catalog.local.type: hadoop
+        spark.sql.catalog.local.warehouse: "{{ env_var('DBT_ICEBERG_WAREHOUSE', 's3a://lake/warehouse') }}"
+        spark.hadoop.fs.s3a.endpoint: "{{ env_var('DBT_S3_ENDPOINT', 'http://localhost:9000') }}"
+        spark.hadoop.fs.s3a.access.key: "{{ env_var('DBT_S3_ACCESS_KEY', 'minioadmin') }}"
+        spark.hadoop.fs.s3a.secret.key: "{{ env_var('DBT_S3_SECRET_KEY', 'minioadmin123') }}"
+        spark.hadoop.fs.s3a.path.style.access: "true"
+        spark.hadoop.fs.s3a.connection.ssl.enabled: "false"
+        spark.hadoop.fs.s3a.impl: org.apache.hadoop.fs.s3a.S3AFileSystem
+        spark.hadoop.fs.s3a.connection.timeout: "60000"
+        spark.hadoop.fs.s3a.connection.establish.timeout: "15000"

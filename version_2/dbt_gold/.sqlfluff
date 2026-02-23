@@ -1,0 +1,7 @@
+[sqlfluff]
+dialect = sparksql
+templater = dbt
+max_line_length = 120
+
+[sqlfluff:templater:dbt]
+project_dir = .

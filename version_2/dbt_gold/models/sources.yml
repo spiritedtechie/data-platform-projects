@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: silver
+    schema: "{{ env_var('DBT_TFL_SILVER_SCHEMA', 'silver') }}"
+    tables:
+      - name: tfl_line_status_events
+        identifier: "{{ env_var('DBT_TFL_SILVER_IDENTIFIER', 'tfl_line_status_events') }}"
+        loaded_at_field: ingest_ts
+        freshness:
+          warn_after: {count: 30, period: minute}
+          error_after: {count: 2, period: hour}
+        columns:
+          - name: ingest_ts
+            data_tests:
+              - not_null
+          - name: line_id
+            data_tests:
+              - not_null
+          - name: status_severity
+            data_tests:
+              - not_null

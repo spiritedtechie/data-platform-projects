@@ -1,0 +1,26 @@
+name: tfl_gold
+version: 1.0.0
+config-version: 2
+require-dbt-version: [">=1.10.0", "<2.0.0"]
+
+profile: tfl_gold
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+
+vars:
+  silver_source_schema: "{{ env_var('DBT_TFL_SILVER_SCHEMA', 'silver') }}"
+  silver_source_identifier: "{{ env_var('DBT_TFL_SILVER_IDENTIFIER', 'tfl_line_status_events') }}"
+
+models:
+  tfl_gold:
+    +materialized: table
+    +file_format: iceberg
+    staging:
+      +schema: gold
+    dimensions:
+      +schema: gold
+    facts:
+      +schema: gold
+    marts:
+      +schema: gold
