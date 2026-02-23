@@ -41,6 +41,7 @@ kafka_df = (
     .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP)
     .option("subscribe", TOPIC)
     .option("startingOffsets", "earliest")
+    .option("failOnDataLoss", "false")
     .load()
 )
 
@@ -63,6 +64,7 @@ bronze_df = (
     bronze_df.writeStream.format("iceberg")
     .outputMode("append")
     .option("checkpointLocation", CHECKPOINT)
+    .trigger(processingTime="30 seconds")
     .toTable(f"{CATALOG}.{NAMESPACE}.{TABLE}")
     .awaitTermination()
 )
