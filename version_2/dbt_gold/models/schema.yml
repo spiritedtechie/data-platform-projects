@@ -22,13 +22,13 @@ models:
         data_tests:
           - accepted_values:
               arguments:
-                values: ['Good Service', 'Minor Delays', 'Severe Delays', 'Suspended / Closed', 'Other']
+                values: ['Good Service', 'Minor Delays', 'Severe Delays', 'Suspended', 'Closed', 'Other']
       - name: severity_weight
         data_tests:
           - not_null
           - accepted_values:
               arguments:
-                values: [0.0, 1.0, 2.0, 3.0, 4.0]
+                values: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
                 quote: false
 
   - name: dim_datetime
@@ -60,12 +60,11 @@ models:
               arguments:
                 to: ref('dim_status')
                 field: status_severity
-      - name: valid_from
+      - name: interval_start_ts
         data_tests:
           - not_null
-      - name: valid_to
-        data_tests:
-          - not_null
+      - name: interval_end_ts
+        description: "Null for the current open interval; populated for closed historical intervals."
       - name: disruption_category
         data_tests:
           - accepted_values:

@@ -9,7 +9,7 @@
 
 with changed_lines as (
     {{ incremental_distinct_keys(
-        relation=ref('fact_line_status_interval'),
+        relation=ref('int_line_interval_scored'),
         key_col='line_id',
         source_watermark_col='ingest_ts',
         target_relation=this,
@@ -18,18 +18,9 @@ with changed_lines as (
 ),
 
 intervals as (
-    select *
-    from (
-        select
-            f.*,
-            row_number() over (
-                partition by f.line_id, f.valid_from
-                order by f.ingest_ts desc, f.event_ts desc, f.event_id desc
-            ) as rn
-        from {{ ref('fact_line_status_interval') }} as f
-        inner join changed_lines as l on f.line_id = l.line_id
-    ) as deduped
-    where rn = 1
+    select i.*
+    from {{ ref('int_line_interval_scored') }} as i
+    inner join changed_lines as l on i.line_id = l.line_id
 ),
 
 line_dim as (
@@ -40,49 +31,47 @@ line_dim as (
     from {{ ref('dim_line') }}
 ),
 
-status_dim as (
-    select * from {{ ref('dim_status') }}
-),
-
 changes as (
     select
         c.line_id,
         date_trunc('hour', c.change_ts) as bucket_hour,
         count(*) as state_change_count
     from {{ ref('fact_line_status_change') }} as c
-    where c.line_id in (select l.line_id from changed_lines as l)
+    inner join changed_lines as l on c.line_id = l.line_id
     group by c.line_id, date_trunc('hour', c.change_ts)
 ),
 
 expanded as (
+    -- Explode intervals into hourly buckets to allow for accurate aggregation of service status within each hour
     select
         i.*,
-        explode(sequence(date_trunc('hour', i.valid_from), date_trunc('hour', i.valid_to), interval 1 hour))
+        explode(
+            sequence(date_trunc('hour', i.interval_start_ts), date_trunc('hour', i.interval_end_ts), interval 1 hour)
+        )
             as bucket_hour
     from intervals as i
 ),
 
 overlap as (
+    -- Calculate the overlap of each status interval with its corresponding hourly bucket
     select
         e.line_id,
         e.status_severity,
         e.is_good_service,
         e.is_disrupted,
         e.ingest_ts,
+        e.severity_weight,
         e.bucket_hour,
-        greatest(e.valid_from, e.bucket_hour) as overlap_start,
-        least(e.valid_to, e.bucket_hour + interval 1 hour) as overlap_end
+        greatest(e.interval_start_ts, e.bucket_hour) as overlap_start,
+        least(e.interval_end_ts, e.bucket_hour + interval 1 hour) as overlap_end
     from expanded as e
 ),
 
 scored as (
     select
         o.*,
-        cast(unix_timestamp(o.overlap_end) - unix_timestamp(o.overlap_start) as bigint) as overlap_seconds,
-        coalesce(d.severity_weight, 0.0) as severity_weight
+        cast(unix_timestamp(o.overlap_end) - unix_timestamp(o.overlap_start) as bigint) as overlap_seconds
     from overlap as o
-    left join status_dim as d
-        on o.status_severity = d.status_severity
     where o.overlap_end > o.overlap_start
 ),
 

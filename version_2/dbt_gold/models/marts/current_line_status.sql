@@ -41,7 +41,9 @@ status_dim as (
 ranked as (
     select
         *,
-        row_number() over (partition by line_id order by valid_from desc, event_ts desc, ingest_ts desc) as rn
+        row_number()
+            over (partition by line_id order by interval_start_ts desc, ingest_ts desc, status_severity asc)
+            as rn
     from i
 )
 
@@ -54,11 +56,10 @@ select
     r.is_disrupted,
     r.disruption_category,
     r.reason,
-    r.valid_from as status_valid_from,
-    r.valid_to as status_valid_to,
-    r.event_ts as last_event_ts,
+    r.interval_start_ts as status_valid_from,
+    r.interval_end_ts as status_valid_to,
     r.ingest_ts as last_ingest_ts,
-    (unix_timestamp(current_timestamp()) - unix_timestamp(r.valid_from)) / 60.0 as last_changed_minutes_ago
+    (unix_timestamp(current_timestamp()) - unix_timestamp(r.interval_start_ts)) / 60.0 as last_changed_minutes_ago
 from ranked as r
 left join line_dim as d on r.line_id = d.line_id
 left join status_dim as s on r.status_severity = s.status_severity

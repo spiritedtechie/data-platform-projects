@@ -23,26 +23,38 @@ events as (
     inner join changed_lines as l on s.line_id = l.line_id
 ),
 
-base as (
+prepared as (
+    -- Normalize reason text, derive disruption flag, and compute interval_start_ts for each event.
     select
         line_id,
         event_id,
         event_ts,
         ingest_ts,
+        valid_from as source_valid_from,
+        valid_to as source_valid_to,
         status_severity,
         reason,
-        regexp_replace(lower(trim(coalesce(reason, ''))), '\\s+', ' ') as reason_norm,
-        sha2(reason_norm, 256) as reason_text_hash,
-        coalesce(is_disrupted, not {{ is_good_service_from_severity('status_severity') }}) as is_disrupted
+        regexp_replace(lower(trim(coalesce(reason, ''))), '\\s+', ' ') as reason_normalized,
+        sha2(reason_normalized, 256) as reason_text_hash,
+        coalesce(is_disrupted, not {{ is_good_service_from_severity('status_severity') }}) as is_disrupted,
+        case
+            when coalesce(is_disrupted, not {{ is_good_service_from_severity('status_severity') }})
+                then coalesce(valid_from, event_ts)
+            else event_ts
+        end as interval_start_ts
     from events
 ),
 
-snapshot_resolved as (
+latest_per_start as (
+    -- For each line and interval_start_ts, keep only the latest event version.
     select
         line_id,
         event_id,
         event_ts,
         ingest_ts,
+        source_valid_from,
+        interval_start_ts,
+        source_valid_to,
         status_severity,
         reason,
         reason_text_hash,
@@ -51,157 +63,63 @@ snapshot_resolved as (
         select
             *,
             row_number() over (
-                partition by line_id, event_ts
-                order by
-                    -- Prefer more severe statuses.
-                    -- For ties, prefer rows with a reason.
-                    status_severity asc,
-                    case when reason_norm = '' then 1 else 0 end asc,
-                    ingest_ts desc,
-                    event_id desc
+                partition by line_id, interval_start_ts
+                order by event_ts desc, ingest_ts desc, event_id desc
             ) as rn
-        from base
+        from prepared
     ) as x
     where rn = 1
 ),
 
-with_prev as (
+sequenced as (
+    -- Compute future interval boundaries per line.
     select
         *,
-        lag(status_severity) over (
+        -- Next interval start for this line.
+        lead(interval_start_ts) over (
             partition by line_id
-            order by event_ts, ingest_ts, event_id
-        ) as prev_status_severity,
-        lag(reason_text_hash) over (
-            partition by line_id
-            order by event_ts, ingest_ts, event_id
-        ) as prev_reason_text_hash
-    from snapshot_resolved
+            order by interval_start_ts, ingest_ts, event_id
+        ) as next_interval_start_ts
+    from latest_per_start
 ),
 
-state_marked as (
+finalized as (
+    -- handle interval end logic
     select
         *,
         case
-            when prev_status_severity is null then 1
-            when status_severity != prev_status_severity then 1
-            when reason_text_hash != prev_reason_text_hash then 1
-            else 0
-        end as is_new_state
-    from with_prev
-),
-
-state_grouped as (
-    select
-        *,
-        sum(is_new_state) over (
-            partition by line_id
-            order by event_ts, ingest_ts, event_id
-            rows between unbounded preceding and current row
-        ) as state_group_id
-    from state_marked
-),
-
-state_group_first as (
-    select
-        line_id,
-        state_group_id,
-        event_id,
-        event_ts,
-        ingest_ts,
-        status_severity,
-        reason,
-        reason_text_hash,
-        is_disrupted
-    from (
-        select
-            *,
-            row_number() over (
-                partition by line_id, state_group_id
-                order by event_ts, ingest_ts, event_id
-            ) as rn
-        from state_grouped
-    ) as x
-    where rn = 1
-),
-
-state_group_counts as (
-    select
-        line_id,
-        state_group_id,
-        cast(count(*) as bigint) as event_count_in_interval
-    from state_grouped
-    group by line_id, state_group_id
-),
-
-segments as (
-    select
-        f.line_id,
-        f.event_id,
-        f.event_ts,
-        f.ingest_ts,
-        f.status_severity,
-        f.reason,
-        f.reason_text_hash,
-        f.is_disrupted,
-        f.event_ts as valid_from,
-        c.event_count_in_interval,
-        lead(f.event_ts) over (
-            partition by f.line_id
-            order by f.event_ts, f.ingest_ts, f.event_id
-        ) as next_valid_from,
-        max(f.event_ts) over (partition by f.line_id) as last_change_ts
-    from state_group_first as f
-    inner join state_group_counts as c
-        on
-            f.line_id = c.line_id
-            and f.state_group_id = c.state_group_id
-),
-
-bounded as (
-    select
-        line_id,
-        event_id,
-        event_ts,
-        ingest_ts,
-        valid_from,
-        status_severity,
-        reason,
-        reason_text_hash,
-        is_disrupted,
-        event_count_in_interval,
-        case
-            when coalesce(next_valid_from, last_change_ts + interval 1 second) <= valid_from
-                then valid_from + interval 1 second
-            else coalesce(next_valid_from, last_change_ts + interval 1 second)
-        end as valid_to
-    from segments
+            -- If there's a future event, use its interval_start_ts as the end of this interval.
+            when next_interval_start_ts is not null
+                then next_interval_start_ts
+            -- If there's no future event, but this event is a disruption with a valid_to, use that as the interval end.
+            when is_disrupted and source_valid_to is not null and source_valid_to > interval_start_ts
+                then source_valid_to
+        end as interval_end_ts
+    from sequenced
 )
 
 select
     line_id,
     event_id,
     event_ts,
-    ingest_ts,
-    valid_from,
-    valid_to,
-    cast(unix_timestamp(valid_to) - unix_timestamp(valid_from) as bigint) as interval_seconds,
+    source_valid_from,
+    source_valid_to,
+    interval_start_ts,
+    interval_end_ts,
+    case
+        when interval_end_ts is null then null
+        else cast(
+            greatest(
+                1.0,
+                ceil((unix_millis(interval_end_ts) - unix_millis(interval_start_ts)) / 1000.0)
+            ) as bigint
+        )
+    end as interval_seconds,
     status_severity,
     {{ is_good_service_from_severity('status_severity') }} as is_good_service,
     is_disrupted,
-    case
-        when lower(coalesce(reason, '')) like '%signal%' then 'Signal Failure'
-        when lower(coalesce(reason, '')) like '%train cancellation%' then 'Train Cancellations'
-        when lower(coalesce(reason, '')) like '%customer incident%' then 'Customer Incident'
-        when lower(coalesce(reason, '')) like '%power%' then 'Power Issue'
-        when lower(coalesce(reason, '')) like '%staff%' then 'Staffing'
-        when lower(coalesce(reason, '')) like '%weather%' then 'Weather'
-        when lower(coalesce(reason, '')) like '%engineering%' then 'Engineering Work'
-        when lower(coalesce(reason, '')) like '%planned closure%' then 'Planned Closure'
-        when reason is null or trim(reason) = '' then 'Unknown'
-        else 'Other'
-    end as disruption_category,
+    {{ disruption_category_from_reason('reason') }} as disruption_category,
     reason,
     reason_text_hash,
-    event_count_in_interval
-from bounded
+    ingest_ts
+from finalized

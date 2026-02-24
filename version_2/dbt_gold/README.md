@@ -63,6 +63,42 @@ dbt build --profiles-dir . --select <selector>
 dbt test --profiles-dir . --select <selector>
 ```
 
+### See failing rows for a test
+
+After a failing `dbt test`, inspect the actual failing records with:
+
+```bash
+dbt show --profiles-dir . --select <test_name> --limit 50
+```
+
+Example:
+
+```bash
+dbt show --profiles-dir . --select test_fact_line_status_interval_bounds --limit 50
+```
+
+Tip: use the test name shown in the failing test output.
+
+### Inspect model output
+
+Preview rows from a model:
+
+```bash
+dbt show --profiles-dir . --select <model_name> --limit 50
+```
+
+Example:
+
+```bash
+dbt show --profiles-dir . --select fact_line_status_interval --limit 50
+```
+
+You can also run ad-hoc SQL against refs:
+
+```bash
+dbt show --profiles-dir . --inline "select * from {{ ref('<model_name>') }} limit 50"
+```
+
 ## 2) Makefile usage (optional wrappers)
 
 The Makefile provides shortcuts for the dbt commands above.

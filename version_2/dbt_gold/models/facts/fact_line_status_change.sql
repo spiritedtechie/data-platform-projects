@@ -26,13 +26,17 @@ i as (
 ordered as (
     select
         line_id,
-        valid_from as change_ts,
-        valid_to,
+        interval_start_ts as change_ts,
+        interval_end_ts,
         interval_seconds,
         ingest_ts as source_ingest_ts,
         status_severity as new_status_severity,
-        lag(status_severity) over (partition by line_id order by valid_from, event_ts) as prev_status_severity,
-        lag(valid_from) over (partition by line_id order by valid_from, event_ts) as prev_change_ts
+        lag(status_severity)
+            over (partition by line_id order by interval_start_ts, ingest_ts, status_severity)
+            as prev_status_severity,
+        lag(interval_start_ts)
+            over (partition by line_id order by interval_start_ts, ingest_ts, status_severity)
+            as prev_change_ts
     from i
 )
 

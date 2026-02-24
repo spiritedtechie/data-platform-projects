@@ -34,3 +34,18 @@ case
     else false
 end
 {%- endmacro %}
+
+{% macro disruption_category_from_reason(reason_col) -%}
+case
+    when lower(coalesce({{ reason_col }}, '')) like '%signal%' then 'Signal Failure'
+    when lower(coalesce({{ reason_col }}, '')) like '%train cancellation%' then 'Train Cancellations'
+    when lower(coalesce({{ reason_col }}, '')) like '%customer incident%' then 'Customer Incident'
+    when lower(coalesce({{ reason_col }}, '')) like '%power%' then 'Power Issue'
+    when lower(coalesce({{ reason_col }}, '')) like '%staff%' then 'Staffing'
+    when lower(coalesce({{ reason_col }}, '')) like '%weather%' then 'Weather'
+    when lower(coalesce({{ reason_col }}, '')) like '%engineering%' then 'Engineering Work'
+    when lower(coalesce({{ reason_col }}, '')) like '%planned closure%' then 'Planned Closure'
+    when {{ reason_col }} is null or trim({{ reason_col }}) = '' then 'Unknown'
+    else 'Other'
+end
+{%- endmacro %}
