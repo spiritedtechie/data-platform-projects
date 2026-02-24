@@ -15,7 +15,9 @@ with changed_lines as (
         target_relation=this,
         target_watermark_col='max_source_ingest_ts'
     ) }}
-), intervals as (
+),
+
+intervals as (
     select *
     from (
         select
@@ -24,27 +26,38 @@ with changed_lines as (
                 partition by f.line_id, f.valid_from
                 order by f.ingest_ts desc, f.event_ts desc, f.event_id desc
             ) as rn
-        from {{ ref('fact_line_status_interval') }} f
-        inner join changed_lines l on f.line_id = l.line_id
-    ) deduped
+        from {{ ref('fact_line_status_interval') }} as f
+        inner join changed_lines as l on f.line_id = l.line_id
+    ) as deduped
     where rn = 1
-), line_dim as (
-    select line_id, line_name, mode
-    from {{ ref('dim_line') }}
-), status_dim as (
-    select * from {{ ref('dim_status') }}
-), changes as (
+),
+
+line_dim as (
     select
         line_id,
-        to_date(change_ts) as service_date,
+        line_name,
+        mode
+    from {{ ref('dim_line') }}
+),
+
+status_dim as (
+    select * from {{ ref('dim_status') }}
+),
+
+changes as (
+    select
+        c.line_id,
+        to_date(c.change_ts) as service_date,
         count(*) as num_state_changes,
-        avg(time_in_new_state_seconds) as avg_time_in_state_seconds,
-        avg(case when recovery_flag then time_since_prev_seconds end) as time_to_recover_avg_seconds,
-        max(source_ingest_ts) as max_change_ingest_ts
-    from {{ ref('fact_line_status_change') }}
-    where line_id in (select line_id from changed_lines)
-    group by line_id, to_date(change_ts)
-), incidents as (
+        avg(c.time_in_new_state_seconds) as avg_time_in_state_seconds,
+        avg(case when c.recovery_flag then c.time_since_prev_seconds end) as time_to_recover_avg_seconds,
+        max(c.source_ingest_ts) as max_change_ingest_ts
+    from {{ ref('fact_line_status_change') }} as c
+    where c.line_id in (select l.line_id from changed_lines as l)
+    group by c.line_id, to_date(c.change_ts)
+),
+
+incidents as (
     select
         line_id,
         to_date(valid_from) as service_date,
@@ -56,37 +69,45 @@ with changed_lines as (
     from intervals
     where is_disrupted = true
     group by line_id, to_date(valid_from)
-), expanded as (
+),
+
+expanded as (
     select
         i.*,
         explode(sequence(date_trunc('day', i.valid_from), date_trunc('day', i.valid_to), interval 1 day)) as bucket_day
-    from intervals i
-), overlap as (
+    from intervals as i
+),
+
+overlap as (
     select
-        line_id,
-        status_severity,
-        is_good_service,
-        is_disrupted,
-        ingest_ts,
-        to_date(bucket_day) as service_date,
-        greatest(valid_from, bucket_day) as overlap_start,
-        least(valid_to, bucket_day + interval 1 day) as overlap_end
-    from expanded
-), scored as (
+        e.line_id,
+        e.status_severity,
+        e.is_good_service,
+        e.is_disrupted,
+        e.ingest_ts,
+        to_date(e.bucket_day) as service_date,
+        greatest(e.valid_from, e.bucket_day) as overlap_start,
+        least(e.valid_to, e.bucket_day + interval 1 day) as overlap_end
+    from expanded as e
+),
+
+scored as (
     select
         o.*,
-        cast(unix_timestamp(overlap_end) - unix_timestamp(overlap_start) as bigint) as overlap_seconds,
+        cast(unix_timestamp(o.overlap_end) - unix_timestamp(o.overlap_start) as bigint) as overlap_seconds,
         coalesce(d.severity_weight, 0.0) as severity_weight
-    from overlap o
-    left join status_dim d
-      on o.status_severity = d.status_severity
-    where overlap_end > overlap_start
-), aggregated as (
+    from overlap as o
+    left join status_dim as d
+        on o.status_severity = d.status_severity
+    where o.overlap_end > o.overlap_start
+),
+
+aggregated as (
     select
         s.service_date,
         s.line_id,
         max(l.line_name) as line_name,
-        max(l.mode) as mode,
+        max(l.`mode`) as `mode`,
         sum(s.overlap_seconds) as raw_total_seconds,
         {{ sum_when('s.is_good_service', 's.overlap_seconds') }} as raw_good_service_seconds,
         {{ sum_when('s.is_disrupted', 's.overlap_seconds') }} as raw_disruption_seconds,
@@ -100,23 +121,29 @@ with changed_lines as (
         c.avg_time_in_state_seconds,
         c.time_to_recover_avg_seconds,
         min(s.status_severity) as worst_status_severity,
-        greatest(max(s.ingest_ts), coalesce(max(i.max_incident_ingest_ts), timestamp('1900-01-01')), coalesce(max(c.max_change_ingest_ts), timestamp('1900-01-01'))) as max_source_ingest_ts
-    from scored s
-    left join line_dim l
-      on s.line_id = l.line_id
-    left join incidents i
-      on s.line_id = i.line_id and s.service_date = i.service_date
-    left join changes c
-      on s.line_id = c.line_id and s.service_date = c.service_date
-    group by s.service_date, s.line_id, i.mean_incident_duration_seconds, i.p50_incident_duration_seconds,
-      i.p95_incident_duration_seconds, i.max_incident_duration_seconds, c.num_state_changes,
-      c.avg_time_in_state_seconds, c.time_to_recover_avg_seconds
+        greatest(
+            max(s.ingest_ts),
+            coalesce(max(i.max_incident_ingest_ts), timestamp('1900-01-01')),
+            coalesce(max(c.max_change_ingest_ts), timestamp('1900-01-01'))
+        ) as max_source_ingest_ts
+    from scored as s
+    left join line_dim as l
+        on s.line_id = l.line_id
+    left join incidents as i
+        on s.line_id = i.line_id and s.service_date = i.service_date
+    left join changes as c
+        on s.line_id = c.line_id and s.service_date = c.service_date
+    group by
+        s.service_date, s.line_id, i.mean_incident_duration_seconds, i.p50_incident_duration_seconds,
+        i.p95_incident_duration_seconds, i.max_incident_duration_seconds, c.num_state_changes,
+        c.avg_time_in_state_seconds, c.time_to_recover_avg_seconds
 )
+
 select
     service_date,
     line_id,
     line_name,
-    mode,
+    `mode`,
     least(raw_total_seconds, 86400) as total_seconds,
     least(raw_good_service_seconds, least(raw_total_seconds, 86400)) as good_service_seconds,
     least(raw_disruption_seconds, least(raw_total_seconds, 86400)) as disruption_seconds,
@@ -130,6 +157,9 @@ select
     avg_time_in_state_seconds,
     time_to_recover_avg_seconds,
     worst_status_severity,
-    {{ safe_divide('least(raw_good_service_seconds, least(raw_total_seconds, 86400))', 'least(raw_total_seconds, 86400)') }} as good_service_pct,
+    {{ safe_divide(
+        'least(raw_good_service_seconds, least(raw_total_seconds, 86400))',
+        'least(raw_total_seconds, 86400)'
+    ) }} as good_service_pct,
     max_source_ingest_ts
 from aggregated

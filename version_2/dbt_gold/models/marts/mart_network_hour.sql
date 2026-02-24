@@ -15,11 +15,14 @@ with impacted_hours as (
         target_relation=this,
         target_watermark_col='max_source_ingest_ts'
     ) }}
-), scoped as (
+),
+
+scoped as (
     select h.*
-    from {{ ref('mart_line_hour') }} h
-    inner join impacted_hours i on h.bucket_hour = i.bucket_hour
+    from {{ ref('mart_line_hour') }} as h
+    inner join impacted_hours as i on h.bucket_hour = i.bucket_hour
 )
+
 select
     bucket_hour,
     service_date,

@@ -15,11 +15,14 @@ with impacted_days as (
         target_relation=this,
         target_watermark_col='max_source_ingest_ts'
     ) }}
-), scoped as (
+),
+
+scoped as (
     select d.*
-    from {{ ref('mart_line_day') }} d
-    inner join impacted_days i on d.service_date = i.service_date
+    from {{ ref('mart_line_day') }} as d
+    inner join impacted_days as i on d.service_date = i.service_date
 )
+
 select
     service_date,
     count(distinct line_id) as lines_reporting,

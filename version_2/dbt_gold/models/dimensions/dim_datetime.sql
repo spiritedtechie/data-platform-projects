@@ -9,20 +9,25 @@
 
 with delta as (
     select
-        to_date(date_trunc('day', coalesce(valid_from, event_ts))) as date_key,
-        ingest_ts as source_ingest_ts
+        ingest_ts as source_ingest_ts,
+        to_date(date_trunc('day', coalesce(valid_from, event_ts))) as date_key
     from {{ ref('stg_silver_line_status_events') }}
     {% if is_incremental() %}
-    where ingest_ts > (select coalesce(max(source_ingest_ts), timestamp('1900-01-01')) from {{ this }})
+        where ingest_ts > (
+            select coalesce(max(t.source_ingest_ts), timestamp('1900-01-01'))
+            from {{ this }} as t
+        )
     {% endif %}
-), 
+),
+
 impacted_dates as (
     select
         date_key,
         max(source_ingest_ts) as source_ingest_ts
     from delta
     group by date_key
-), 
+),
+
 hours as (
     select explode(sequence(0, 23)) as hour_of_day
 )
@@ -38,6 +43,6 @@ select
     quarter(d.date_key) as quarter_num,
     year(d.date_key) as year_num,
     {{ is_weekend_from_date('d.date_key') }} as is_weekend,
-    d.source_ingest_ts as source_ingest_ts
-from impacted_dates d
-cross join hours h
+    d.source_ingest_ts
+from impacted_dates as d
+cross join hours as h

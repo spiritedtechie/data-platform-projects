@@ -14,15 +14,21 @@ with scoped as (
         ingest_ts
     from {{ ref('stg_silver_line_status_events') }}
     {% if is_incremental() %}
-    where ingest_ts > (select coalesce(max(last_ingest_ts), timestamp('1900-01-01')) from {{ this }})
+        where ingest_ts > (
+            select coalesce(max(t.last_ingest_ts), timestamp('1900-01-01'))
+            from {{ this }} as t
+        )
     {% endif %}
-), 
+),
+
 observed as (
-    select distinct status_severity, 
-        coalesce(status_desc, 'Unknown') as status_desc, 
-        ingest_ts
+    select distinct
+        status_severity,
+        ingest_ts,
+        coalesce(status_desc, 'Unknown') as status_desc
     from scoped
-), 
+),
+
 aggregated as (
     select
         status_severity,

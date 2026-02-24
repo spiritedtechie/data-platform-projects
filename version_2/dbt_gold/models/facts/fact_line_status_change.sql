@@ -15,12 +15,14 @@ with changed_lines as (
         target_relation=this,
         target_watermark_col='source_ingest_ts'
     ) }}
-), 
+),
+
 i as (
     select f.*
-    from {{ ref('fact_line_status_interval') }} f
-    inner join changed_lines l on f.line_id = l.line_id
-), 
+    from {{ ref('fact_line_status_interval') }} as f
+    inner join changed_lines as l on f.line_id = l.line_id
+),
+
 ordered as (
     select
         line_id,
@@ -38,7 +40,11 @@ select
     line_id,
     change_ts,
     prev_change_ts,
-    cast(case when prev_change_ts is null then null else unix_timestamp(change_ts) - unix_timestamp(prev_change_ts) end as bigint) as time_since_prev_seconds,
+    cast(
+        case
+            when prev_change_ts is null then null else unix_timestamp(change_ts) - unix_timestamp(prev_change_ts)
+        end as bigint
+    ) as time_since_prev_seconds,
     prev_status_severity,
     new_status_severity,
     {{ recovery_flag_from_severity('prev_status_severity', 'new_status_severity') }} as recovery_flag,

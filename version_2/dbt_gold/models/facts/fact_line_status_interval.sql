@@ -16,11 +16,13 @@ with changed_lines as (
         target_watermark_col='ingest_ts'
     ) }}
 ),
+
 events as (
     select s.*
-    from {{ ref('stg_silver_line_status_events') }} s
-    inner join changed_lines l on s.line_id = l.line_id
+    from {{ ref('stg_silver_line_status_events') }} as s
+    inner join changed_lines as l on s.line_id = l.line_id
 ),
+
 base as (
     select
         line_id,
@@ -34,6 +36,7 @@ base as (
         coalesce(is_disrupted, not {{ is_good_service_from_severity('status_severity') }}) as is_disrupted
     from events
 ),
+
 snapshot_resolved as (
     select
         line_id,
@@ -50,16 +53,18 @@ snapshot_resolved as (
             row_number() over (
                 partition by line_id, event_ts
                 order by
-                    -- We want to prioritize more severe statuses, and among those with the same severity, we prefer ones with a reason provided
+                    -- Prefer more severe statuses.
+                    -- For ties, prefer rows with a reason.
                     status_severity asc,
                     case when reason_norm = '' then 1 else 0 end asc,
                     ingest_ts desc,
                     event_id desc
             ) as rn
         from base
-    ) x
+    ) as x
     where rn = 1
 ),
+
 with_prev as (
     select
         *,
@@ -73,6 +78,7 @@ with_prev as (
         ) as prev_reason_text_hash
     from snapshot_resolved
 ),
+
 state_marked as (
     select
         *,
@@ -84,6 +90,7 @@ state_marked as (
         end as is_new_state
     from with_prev
 ),
+
 state_grouped as (
     select
         *,
@@ -94,6 +101,7 @@ state_grouped as (
         ) as state_group_id
     from state_marked
 ),
+
 state_group_first as (
     select
         line_id,
@@ -113,9 +121,10 @@ state_group_first as (
                 order by event_ts, ingest_ts, event_id
             ) as rn
         from state_grouped
-    ) x
+    ) as x
     where rn = 1
 ),
+
 state_group_counts as (
     select
         line_id,
@@ -124,6 +133,7 @@ state_group_counts as (
     from state_grouped
     group by line_id, state_group_id
 ),
+
 segments as (
     select
         f.line_id,
@@ -141,11 +151,13 @@ segments as (
             order by f.event_ts, f.ingest_ts, f.event_id
         ) as next_valid_from,
         max(f.event_ts) over (partition by f.line_id) as last_change_ts
-    from state_group_first f
-    inner join state_group_counts c
-        on f.line_id = c.line_id
-       and f.state_group_id = c.state_group_id
+    from state_group_first as f
+    inner join state_group_counts as c
+        on
+            f.line_id = c.line_id
+            and f.state_group_id = c.state_group_id
 ),
+
 bounded as (
     select
         line_id,
