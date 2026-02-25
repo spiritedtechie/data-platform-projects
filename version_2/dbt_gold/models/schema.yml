@@ -94,6 +94,31 @@ models:
                 to: ref('dim_status')
                 field: status_severity
 
+  - name: int_line_hour_aggregate
+    columns:
+      - name: line_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_line')
+                field: line_id
+      - name: bucket_hour
+        data_tests:
+          - not_null
+      - name: service_date
+        data_tests:
+          - not_null
+      - name: total_seconds
+        data_tests:
+          - not_null
+      - name: good_service_seconds
+        data_tests:
+          - not_null
+      - name: disruption_seconds
+        data_tests:
+          - not_null
+
   - name: mart_line_hour
     columns:
       - name: line_id

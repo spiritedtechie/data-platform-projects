@@ -9,12 +9,18 @@
 
 with changed_lines as (
     {{ incremental_distinct_keys(
-        relation=ref('int_line_interval_scored'),
+        relation=ref('mart_line_hour'),
         key_col='line_id',
-        source_watermark_col='ingest_ts',
+        source_watermark_col='max_source_ingest_ts',
         target_relation=this,
         target_watermark_col='max_source_ingest_ts'
     ) }}
+),
+
+hourly as (
+    select h.*
+    from {{ ref('mart_line_hour') }} as h
+    inner join changed_lines as l on h.line_id = l.line_id
 ),
 
 intervals as (
@@ -23,15 +29,26 @@ intervals as (
     inner join changed_lines as l on i.line_id = l.line_id
 ),
 
-line_dim as (
+daily_from_hour as (
+    -- Aggregate hourly data to daily level
     select
-        line_id,
-        line_name,
-        mode
-    from {{ ref('dim_line') }}
+        h.service_date,
+        h.line_id,
+        max(h.line_name) as line_name,
+        max(h.`mode`) as `mode`,
+        sum(h.total_seconds) as raw_total_seconds,
+        sum(h.good_service_seconds) as raw_good_service_seconds,
+        sum(h.disruption_seconds) as raw_disruption_seconds,
+        sum(h.severity_weighted_seconds) as severity_weighted_seconds,
+        sum(h.incident_count) as incident_count,
+        min(h.worst_status_severity) as worst_status_severity,
+        max(h.max_source_ingest_ts) as max_hour_ingest_ts
+    from hourly as h
+    group by h.service_date, h.line_id
 ),
 
 changes as (
+    -- Aggregate change data to daily level
     select
         c.line_id,
         to_date(c.change_ts) as service_date,
@@ -45,6 +62,7 @@ changes as (
 ),
 
 incidents as (
+    -- Aggregate incident data to daily level
     select
         line_id,
         to_date(interval_start_ts) as service_date,
@@ -58,72 +76,40 @@ incidents as (
     group by line_id, to_date(interval_start_ts)
 ),
 
-expanded as (
-    -- Explode intervals into daily buckets to handle multi-day incidents and calculate daily metrics
-    select
-        i.*,
-        explode(
-            sequence(date_trunc('day', i.interval_start_ts), date_trunc('day', i.interval_end_ts), interval 1 day)
-        ) as bucket_day
-    from intervals as i
-),
-
-overlap as (
-    -- Calculate the overlap between each interval and its corresponding daily bucket
-    select
-        e.line_id,
-        e.status_severity,
-        e.is_good_service,
-        e.is_disrupted,
-        e.ingest_ts,
-        e.severity_weight,
-        to_date(e.bucket_day) as service_date,
-        greatest(e.interval_start_ts, e.bucket_day) as overlap_start,
-        least(e.interval_end_ts, e.bucket_day + interval 1 day) as overlap_end
-    from expanded as e
-),
-
-scored as (
-    select
-        o.*,
-        cast(unix_timestamp(o.overlap_end) - unix_timestamp(o.overlap_start) as bigint) as overlap_seconds
-    from overlap as o
-    where o.overlap_end > o.overlap_start
-),
-
 aggregated as (
+    -- Join daily, change, and incident data together
     select
-        s.service_date,
-        s.line_id,
-        max(l.line_name) as line_name,
-        max(l.`mode`) as `mode`,
-        sum(s.overlap_seconds) as raw_total_seconds,
-        {{ sum_when('s.is_good_service', 's.overlap_seconds') }} as raw_good_service_seconds,
-        {{ sum_when('s.is_disrupted', 's.overlap_seconds') }} as raw_disruption_seconds,
-        sum(s.overlap_seconds * s.severity_weight) as severity_weighted_seconds,
-        count_if(s.is_disrupted) as incident_count,
+        d.service_date,
+        d.line_id,
+        d.line_name,
+        d.`mode`,
+        d.raw_total_seconds,
+        d.raw_good_service_seconds,
+        d.raw_disruption_seconds,
+        d.severity_weighted_seconds,
+        d.incident_count,
         i.mean_incident_duration_seconds,
         i.p50_incident_duration_seconds,
         i.p95_incident_duration_seconds,
         i.max_incident_duration_seconds,
-        coalesce(c.num_state_changes, 0) as num_state_changes,
         c.time_in_state_avg_seconds,
         c.time_to_recover_avg_seconds,
-        min(s.status_severity) as worst_status_severity,
+        d.worst_status_severity,
+        coalesce(c.num_state_changes, 0) as num_state_changes,
         greatest(
-            max(s.ingest_ts),
+            d.max_hour_ingest_ts,
             coalesce(max(i.max_incident_ingest_ts), timestamp('1900-01-01')),
             coalesce(max(c.max_change_ingest_ts), timestamp('1900-01-01'))
         ) as max_source_ingest_ts
-    from scored as s
-    left join line_dim as l
-        on s.line_id = l.line_id
+    from daily_from_hour as d
     left join incidents as i
-        on s.line_id = i.line_id and s.service_date = i.service_date
+        on d.line_id = i.line_id and d.service_date = i.service_date
     left join changes as c
-        on s.line_id = c.line_id and s.service_date = c.service_date
+        on d.line_id = c.line_id and d.service_date = c.service_date
     group by
-        s.service_date, s.line_id, i.mean_incident_duration_seconds, i.p50_incident_duration_seconds,
+        d.service_date, d.line_id, d.line_name, d.`mode`, d.raw_total_seconds, d.raw_good_service_seconds,
+        d.raw_disruption_seconds, d.severity_weighted_seconds, d.incident_count, d.worst_status_severity,
+        d.max_hour_ingest_ts, i.mean_incident_duration_seconds, i.p50_incident_duration_seconds,
         i.p95_incident_duration_seconds, i.max_incident_duration_seconds, c.num_state_changes,
         c.time_in_state_avg_seconds, c.time_to_recover_avg_seconds
 )
@@ -134,8 +120,6 @@ select
     line_name,
     `mode`,
     least(raw_total_seconds, 86400) as total_seconds,
-    -- Cap good service and disruption seconds at the total seconds for the day, 
-    -- with a max of 86400 seconds (24 hours)
     least(raw_good_service_seconds, least(raw_total_seconds, 86400)) as good_service_seconds,
     least(raw_disruption_seconds, least(raw_total_seconds, 86400)) as disruption_seconds,
     severity_weighted_seconds,
