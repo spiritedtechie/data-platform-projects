@@ -63,6 +63,18 @@ dbt build --profiles-dir . --select <selector>
 dbt test --profiles-dir . --select <selector>
 ```
 
+Build only `fact_line_status_change`:
+
+```bash
+dbt build --profiles-dir . --select path:models/facts/fact_line_status_change.sql
+```
+
+Equivalent model-name selector:
+
+```bash
+dbt build --profiles-dir . --select fact_line_status_change
+```
+
 ### See failing rows for a test
 
 After a failing `dbt test`, inspect the actual failing records with:
@@ -97,6 +109,23 @@ You can also run ad-hoc SQL against refs:
 
 ```bash
 dbt show --profiles-dir . --inline "select * from {{ ref('<model_name>') }} limit 50"
+```
+
+### Visual lineage graph (DAG)
+
+Generate and open dbt docs to see the model lineage graph:
+
+```bash
+dbt docs generate --profiles-dir .
+dbt docs serve --profiles-dir . --port 8080
+```
+
+Then open `http://localhost:8080`, go to **Lineage Graph**, and search for a model (for example `fact_line_status_change`) to view upstream and downstream dependencies.
+
+Optional: generate docs for a subset to focus the graph:
+
+```bash
+dbt docs generate --profiles-dir . --select +fact_line_status_change+
 ```
 
 ## 2) Makefile usage (optional wrappers)

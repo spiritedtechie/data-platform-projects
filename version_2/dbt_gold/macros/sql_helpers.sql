@@ -1,9 +1,21 @@
-{% macro incremental_distinct_keys(relation, key_col, source_watermark_col, target_relation, target_watermark_col) -%}
+{% macro incremental_distinct_keys(
+    relation,
+    key_col,
+    source_watermark_col,
+    target_relation,
+    target_watermark_col,
+    lookback_hours=0
+) -%}
 {% if is_incremental() %}
 select distinct {{ key_col }}
 from {{ relation }}
 where {{ source_watermark_col }} > (
-    select coalesce(max({{ target_watermark_col }}), timestamp('1900-01-01'))
+    select
+        {% if lookback_hours | int > 0 %}
+            coalesce(max({{ target_watermark_col }}), timestamp('1900-01-01')) - interval {{ lookback_hours | int }} hours
+        {% else %}
+            coalesce(max({{ target_watermark_col }}), timestamp('1900-01-01'))
+        {% endif %}
     from {{ target_relation }}
 )
 {% else %}

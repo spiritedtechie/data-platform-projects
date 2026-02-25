@@ -23,10 +23,10 @@ hourly as (
     inner join changed_lines as l on h.line_id = l.line_id
 ),
 
-intervals as (
-    select i.*
-    from {{ ref('int_line_interval_scored') }} as i
-    inner join changed_lines as l on i.line_id = l.line_id
+status_durations as (
+    select d.*
+    from {{ ref('int_line_status_change_durations') }} as d
+    inner join changed_lines as l on d.line_id = l.line_id
 ),
 
 daily_from_hour as (
@@ -51,29 +51,30 @@ changes as (
     -- Aggregate change data to daily level
     select
         c.line_id,
-        to_date(c.change_ts) as service_date,
+        to_date(c.status_valid_from) as service_date,
         count(*) as num_state_changes,
-        avg(c.time_in_new_state_seconds) as time_in_state_avg_seconds,
-        avg(case when c.recovery_flag then c.time_since_prev_seconds end) as time_to_recover_avg_seconds,
+        avg(c.time_in_status_seconds) as time_in_state_avg_seconds,
+        avg(case when c.recovery_flag then c.time_since_prev_status_seconds end) as time_to_recover_avg_seconds,
         max(c.source_ingest_ts) as max_change_ingest_ts
     from {{ ref('fact_line_status_change') }} as c
     inner join changed_lines as l on c.line_id = l.line_id
-    group by c.line_id, to_date(c.change_ts)
+    where c.prev_status_valid_from is not null
+    group by c.line_id, to_date(c.status_valid_from)
 ),
 
 incidents as (
-    -- Aggregate incident data to daily level
+    -- Aggregate disruption duration stats to daily level.
     select
         line_id,
-        to_date(interval_start_ts) as service_date,
-        avg(interval_seconds) as mean_incident_duration_seconds,
-        percentile_approx(interval_seconds, 0.5) as p50_incident_duration_seconds,
-        percentile_approx(interval_seconds, 0.95) as p95_incident_duration_seconds,
-        max(interval_seconds) as max_incident_duration_seconds,
+        to_date(status_start_ts) as service_date,
+        avg(status_duration_seconds) as mean_incident_duration_seconds,
+        percentile_approx(status_duration_seconds, 0.5) as p50_incident_duration_seconds,
+        percentile_approx(status_duration_seconds, 0.95) as p95_incident_duration_seconds,
+        max(status_duration_seconds) as max_incident_duration_seconds,
         max(ingest_ts) as max_incident_ingest_ts
-    from intervals
+    from status_durations
     where is_disrupted = true
-    group by line_id, to_date(interval_start_ts)
+    group by line_id, to_date(status_start_ts)
 ),
 
 aggregated as (
@@ -120,7 +121,10 @@ select
     line_name,
     `mode`,
     least(raw_total_seconds, 86400) as total_seconds,
-    least(raw_good_service_seconds, least(raw_total_seconds, 86400)) as good_service_seconds,
+    greatest(
+        least(raw_total_seconds, 86400) - least(raw_disruption_seconds, least(raw_total_seconds, 86400)),
+        0
+    ) as good_service_seconds,
     least(raw_disruption_seconds, least(raw_total_seconds, 86400)) as disruption_seconds,
     severity_weighted_seconds,
     incident_count,

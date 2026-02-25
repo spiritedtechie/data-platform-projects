@@ -33,7 +33,7 @@ with src as (
         line_id is not null
         {% if is_incremental() %}
             and ingest_ts > (
-                select coalesce(max(t.ingest_ts), timestamp('1900-01-01'))
+                select coalesce(max(t.ingest_ts), timestamp('1900-01-01')) - interval 24 hours
                 from {{ this }} as t
             )
         {% endif %}

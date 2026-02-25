@@ -5,7 +5,7 @@ with ordered as (
         interval_end_ts,
         lead(interval_start_ts) over (
             partition by line_id
-            order by interval_start_ts, ingest_ts, status_severity
+            order by interval_start_ts, ingest_ts, event_id, status_severity, coalesce(reason_text_hash, '')
         ) as next_valid_from
     from {{ ref('fact_line_status_interval') }}
 )

@@ -80,7 +80,7 @@ models:
               arguments:
                 to: ref('dim_line')
                 field: line_id
-      - name: new_status_severity
+      - name: status_severity
         data_tests:
           - not_null
           - relationships:

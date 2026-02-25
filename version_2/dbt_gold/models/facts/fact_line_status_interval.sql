@@ -13,7 +13,8 @@ with changed_lines as (
         key_col='line_id',
         source_watermark_col='ingest_ts',
         target_relation=this,
-        target_watermark_col='ingest_ts'
+        target_watermark_col='ingest_ts',
+        lookback_hours=24
     ) }}
 ),
 
@@ -46,7 +47,8 @@ prepared as (
 ),
 
 latest_per_start as (
-    -- For each line and interval_start_ts, keep only the latest event version.
+    -- Canonicalize to one row per line/start timestamp using the latest-ingested event version.
+    -- This guarantees a single interval boundary at each start timestamp for continuity.
     select
         line_id,
         event_id,
@@ -64,7 +66,7 @@ latest_per_start as (
             *,
             row_number() over (
                 partition by line_id, interval_start_ts
-                order by event_ts desc, ingest_ts desc, event_id desc
+                order by ingest_ts desc, event_ts desc, event_id desc
             ) as rn
         from prepared
     ) as x

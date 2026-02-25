@@ -9,7 +9,7 @@
 
 with changed_lines as (
     {{ incremental_distinct_keys(
-        relation=ref('int_line_interval_scored'),
+        relation=ref('int_line_status_change_durations'),
         key_col='line_id',
         source_watermark_col='ingest_ts',
         target_relation=this,
@@ -17,25 +17,35 @@ with changed_lines as (
     ) }}
 ),
 
-intervals as (
-    select i.*
-    from {{ ref('int_line_interval_scored') }} as i
-    inner join changed_lines as l on i.line_id = l.line_id
+durations as (
+    select d.*
+    from {{ ref('int_line_status_change_durations') }} as d
+    inner join changed_lines as l on d.line_id = l.line_id
 ),
 
 expanded as (
-    -- Explode intervals into hourly buckets. Each interval will be duplicated for each hour it overlaps with.
+    -- Explode status durations into hourly buckets.
     select
-        i.*,
-        explode(
-            sequence(date_trunc('hour', i.interval_start_ts), date_trunc('hour', i.interval_end_ts), interval 1 hour)
+        d.*,
+        cast(
+            from_unixtime(
+                unix_timestamp(date_trunc('hour', d.status_start_ts)) + (hour_offset * 3600)
+            ) as timestamp
         ) as bucket_hour
-    from intervals as i
+    from durations as d
+    lateral view explode(
+        sequence(
+            0,
+            cast(
+                (unix_timestamp(date_trunc('hour', d.status_end_ts))
+                    - unix_timestamp(date_trunc('hour', d.status_start_ts))) / 3600 as int
+            )
+        )
+    ) exploded as hour_offset
 ),
 
 overlap as (
-    -- Calculate the overlap between each interval and its corresponding hourly bucket. 
-    -- This will give us the number of seconds of disruption or good service in each hour.
+    -- Calculate overlap between each status duration and hour bucket.
     select
         e.line_id,
         e.status_severity,
@@ -44,13 +54,16 @@ overlap as (
         e.ingest_ts,
         e.severity_weight,
         e.bucket_hour,
-        greatest(e.interval_start_ts, e.bucket_hour) as overlap_start,
-        least(e.interval_end_ts, e.bucket_hour + interval 1 hour) as overlap_end
+        greatest(e.status_start_ts, e.bucket_hour) as overlap_start,
+        least(
+            e.status_end_ts,
+            cast(from_unixtime(unix_timestamp(e.bucket_hour) + 3600) as timestamp)
+        ) as overlap_end
     from expanded as e
 ),
 
 scored as (
-    -- Filter out intervals that do not overlap with the bucket at all (negative or zero overlap).
+    -- Filter out rows with no overlap.
     select
         o.*,
         cast(unix_timestamp(o.overlap_end) - unix_timestamp(o.overlap_start) as bigint) as overlap_seconds
@@ -83,6 +96,9 @@ select
     worst_status_severity,
     max_source_ingest_ts,
     least(raw_total_seconds, 3600) as total_seconds,
-    least(raw_good_service_seconds, least(raw_total_seconds, 3600)) as good_service_seconds,
+    greatest(
+        least(raw_total_seconds, 3600) - least(raw_disruption_seconds, least(raw_total_seconds, 3600)),
+        0
+    ) as good_service_seconds,
     least(raw_disruption_seconds, least(raw_total_seconds, 3600)) as disruption_seconds
 from aggregated

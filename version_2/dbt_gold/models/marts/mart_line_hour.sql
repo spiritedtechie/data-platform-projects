@@ -37,11 +37,12 @@ changes as (
     -- Count the number of status changes for each line in each hour
     select
         c.line_id,
-        date_trunc('hour', c.change_ts) as bucket_hour,
+        date_trunc('hour', c.status_valid_from) as bucket_hour,
         count(*) as state_change_count
     from {{ ref('fact_line_status_change') }} as c
     inner join changed_lines as l on c.line_id = l.line_id
-    group by c.line_id, date_trunc('hour', c.change_ts)
+    where c.prev_status_valid_from is not null
+    group by c.line_id, date_trunc('hour', c.status_valid_from)
 ),
 
 aggregated as (
