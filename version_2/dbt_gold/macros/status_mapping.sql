@@ -2,9 +2,13 @@
 case
     when {{ status_severity_col }} = 10 then 'Good Service'
     when {{ status_severity_col }} = 9 then 'Minor Delays'
-    when {{ status_severity_col }} = 8 then 'Severe Delays'
-    when {{ status_severity_col }} = 20 then 'Closed'
-    when {{ status_severity_col }} in (7, 6, 5) then 'Suspended'
+    when {{ status_severity_col }} = 7 then 'Reduced Service'
+    when {{ status_severity_col }} = 6 then 'Severe Delays'
+    when {{ status_severity_col }} = 5 then 'Part Closure'
+    when {{ status_severity_col }} = 4 then 'Planned Closure'
+    when {{ status_severity_col }} = 3 then 'Part Suspended'
+    when {{ status_severity_col }} = 2 then 'Suspended'
+    when {{ status_severity_col }} = 20 then 'Service Closed'
     else 'Other'
 end
 {%- endmacro %}
@@ -13,9 +17,10 @@ end
 case
     when {{ status_severity_col }} = 10 then 0.0
     when {{ status_severity_col }} = 9 then 1.0
-    when {{ status_severity_col }} = 8 then 2.0
-    when {{ status_severity_col }} = 7 then 3.0
-    when {{ status_severity_col }} in (6, 5) then 4.0
+    when {{ status_severity_col }} = 7 then 2.0
+    when {{ status_severity_col }} = 6 then 3.0
+    when {{ status_severity_col }} in (5, 3) then 4.0
+    when {{ status_severity_col }} in (4, 2) then 5.0
     when {{ status_severity_col }} = 20 then 5.0
     else 2.0
 end
