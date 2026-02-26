@@ -1,6 +1,24 @@
 version: 2
 
 models:
+  - name: stg_silver_line_status_events
+    columns:
+      - name: line_id
+        data_tests:
+          - not_null
+      - name: event_id
+        data_tests:
+          - not_null
+      - name: event_ts
+        data_tests:
+          - not_null
+      - name: ingest_ts
+        data_tests:
+          - not_null
+      - name: status_severity
+        data_tests:
+          - not_null
+
   - name: dim_line
     columns:
       - name: line_id
@@ -119,6 +137,92 @@ models:
         data_tests:
           - not_null
 
+  - name: int_line_status_change_durations
+    columns:
+      - name: line_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_line')
+                field: line_id
+      - name: status_start_ts
+        data_tests:
+          - not_null
+      - name: status_end_ts
+        data_tests:
+          - not_null
+      - name: status_duration_seconds
+        data_tests:
+          - not_null
+      - name: status_severity
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_status')
+                field: status_severity
+      - name: is_good_service
+        data_tests:
+          - not_null
+      - name: is_disrupted
+        data_tests:
+          - not_null
+      - name: ingest_ts
+        data_tests:
+          - not_null
+
+  - name: mart_network_hour
+    columns:
+      - name: bucket_hour
+        data_tests:
+          - not_null
+      - name: service_date
+        data_tests:
+          - not_null
+      - name: lines_reporting
+        data_tests:
+          - not_null
+      - name: lines_impacted
+        data_tests:
+          - not_null
+      - name: total_seconds
+        data_tests:
+          - not_null
+      - name: good_service_seconds
+        data_tests:
+          - not_null
+      - name: disruption_seconds
+        data_tests:
+          - not_null
+      - name: network_good_service_pct
+        data_tests:
+          - not_null
+
+  - name: mart_network_day
+    columns:
+      - name: service_date
+        data_tests:
+          - not_null
+      - name: lines_reporting
+        data_tests:
+          - not_null
+      - name: lines_impacted
+        data_tests:
+          - not_null
+      - name: total_seconds
+        data_tests:
+          - not_null
+      - name: good_service_seconds
+        data_tests:
+          - not_null
+      - name: disruption_seconds
+        data_tests:
+          - not_null
+      - name: network_good_service_pct
+        data_tests:
+          - not_null
+  
   - name: mart_line_hour
     columns:
       - name: line_id
