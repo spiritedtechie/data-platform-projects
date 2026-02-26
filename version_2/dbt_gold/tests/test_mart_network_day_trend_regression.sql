@@ -45,21 +45,26 @@ flagged as (
         end as is_bad_day
     from daily_with_baseline
 ),
-with_prev as (
+latest_day as (
+    select f.*
+    from flagged as f
+    inner join latest_complete_date as l
+        on f.service_date = l.service_date
+),
+prev_day as (
     select
-        *,
-        lag(service_date) over (order by service_date) as prev_service_date,
-        lag(is_bad_day) over (order by service_date) as prev_is_bad_day
-    from flagged
+        f.service_date as prev_service_date,
+        f.is_bad_day as prev_is_bad_day
+    from flagged as f
 )
 select
-    service_date,
-    network_good_service_pct,
-    baseline_p50,
-    baseline_days,
-    lines_reporting
-from with_prev
-where service_date = (select service_date from latest_complete_date)
-  and is_bad_day = true
-  and prev_is_bad_day = true
-  and datediff(service_date, prev_service_date) = 1
+    l.service_date,
+    l.network_good_service_pct,
+    l.baseline_p50,
+    l.baseline_days,
+    l.lines_reporting
+from latest_day as l
+inner join prev_day as p
+    on p.prev_service_date = date_sub(l.service_date, 1)
+where l.is_bad_day = true
+  and p.prev_is_bad_day = true

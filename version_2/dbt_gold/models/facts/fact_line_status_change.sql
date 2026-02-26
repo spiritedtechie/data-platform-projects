@@ -2,7 +2,7 @@
   config(
     materialized='incremental',
     incremental_strategy='merge',
-    unique_key=['line_id', 'status_valid_from', 'status_severity'],
+    unique_key=['line_id', 'status_valid_from', 'status_severity', 'reason_text_hash'],
     on_schema_change='sync_all_columns'
   )
 }}
@@ -13,7 +13,8 @@ with changed_lines as (
         key_col='line_id',
         source_watermark_col='ingest_ts',
         target_relation=this,
-        target_watermark_col='source_ingest_ts'
+        target_watermark_col='source_ingest_ts',
+        lookback_hours=24
     ) }}
 ),
 

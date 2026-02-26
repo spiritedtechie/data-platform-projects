@@ -14,7 +14,7 @@ with delta as (
     from {{ ref('stg_silver_line_status_events') }}
     {% if is_incremental() %}
         where ingest_ts > (
-            select coalesce(max(t.source_ingest_ts), timestamp('1900-01-01'))
+            select coalesce(max(t.source_ingest_ts), timestamp('1900-01-01')) - interval 24 hours
             from {{ this }} as t
         )
     {% endif %}

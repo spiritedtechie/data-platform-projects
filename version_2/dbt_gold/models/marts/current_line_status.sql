@@ -13,7 +13,8 @@ with changed_lines as (
         key_col='line_id',
         source_watermark_col='source_ingest_ts',
         target_relation=this,
-        target_watermark_col='last_ingest_ts'
+        target_watermark_col='last_ingest_ts',
+        lookback_hours=24
     ) }}
 ),
 

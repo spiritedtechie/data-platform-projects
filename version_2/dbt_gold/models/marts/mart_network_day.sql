@@ -13,7 +13,8 @@ with impacted_days as (
         key_col='service_date',
         source_watermark_col='max_source_ingest_ts',
         target_relation=this,
-        target_watermark_col='max_source_ingest_ts'
+        target_watermark_col='max_source_ingest_ts',
+        lookback_hours=24
     ) }}
 ),
 
