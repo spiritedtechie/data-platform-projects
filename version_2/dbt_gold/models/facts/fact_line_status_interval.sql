@@ -55,12 +55,12 @@ latest_per_start as (
         event_ts,
         ingest_ts,
         source_valid_from,
-        interval_start_ts,
         source_valid_to,
         status_severity,
         reason,
         reason_text_hash,
-        is_disrupted
+        is_disrupted,
+        interval_start_ts
     from (
         select
             *,
@@ -101,6 +101,7 @@ finalized as (
 )
 
 select
+    ingest_ts,
     line_id,
     event_id,
     event_ts,
@@ -122,6 +123,5 @@ select
     is_disrupted,
     {{ disruption_category_from_reason('reason') }} as disruption_category,
     reason,
-    reason_text_hash,
-    ingest_ts
+    reason_text_hash
 from finalized

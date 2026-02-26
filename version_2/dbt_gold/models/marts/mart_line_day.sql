@@ -25,9 +25,17 @@ hourly as (
 ),
 
 status_durations as (
-    select d.*
-    from {{ ref('int_line_status_change_durations') }} as d
-    inner join changed_lines as l on d.line_id = l.line_id
+    select
+        c.line_id,
+        c.status_valid_from as status_start_ts,
+        c.time_in_status_seconds as status_duration_seconds,
+        c.is_disrupted,
+        c.source_ingest_ts as ingest_ts
+    from {{ ref('fact_line_status_change') }} as c
+    inner join changed_lines as l on c.line_id = l.line_id
+    where
+        c.time_in_status_seconds is not null
+        and c.time_in_status_seconds > 0
 ),
 
 daily_from_hour as (

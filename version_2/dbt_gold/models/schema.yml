@@ -105,6 +105,17 @@ models:
               arguments:
                 to: ref('dim_status')
                 field: status_severity
+      - name: is_good_service
+        data_tests:
+          - not_null
+      - name: is_disrupted
+        data_tests:
+          - not_null
+      - name: disruption_category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Signal Failure', 'Train Cancellations', 'Customer Incident', 'Power Issue', 'Staffing', 'Weather', 'Engineering Work', 'Planned Closure', 'Unknown', 'Other']
       - name: prev_status_severity
         data_tests:
           - relationships:
@@ -134,41 +145,6 @@ models:
         data_tests:
           - not_null
       - name: disruption_seconds
-        data_tests:
-          - not_null
-
-  - name: int_line_status_change_durations
-    columns:
-      - name: line_id
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_line')
-                field: line_id
-      - name: status_start_ts
-        data_tests:
-          - not_null
-      - name: status_end_ts
-        data_tests:
-          - not_null
-      - name: status_duration_seconds
-        data_tests:
-          - not_null
-      - name: status_severity
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_status')
-                field: status_severity
-      - name: is_good_service
-        data_tests:
-          - not_null
-      - name: is_disrupted
-        data_tests:
-          - not_null
-      - name: ingest_ts
         data_tests:
           - not_null
 

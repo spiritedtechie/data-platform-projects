@@ -9,9 +9,9 @@
 
 with changed_lines as (
     {{ incremental_distinct_keys(
-        relation=ref('int_line_status_change_durations'),
+        relation=ref('fact_line_status_change'),
         key_col='line_id',
-        source_watermark_col='ingest_ts',
+        source_watermark_col='source_ingest_ts',
         target_relation=this,
         target_watermark_col='max_source_ingest_ts',
         lookback_hours=24
@@ -19,9 +19,24 @@ with changed_lines as (
 ),
 
 durations as (
-    select d.*
-    from {{ ref('int_line_status_change_durations') }} as d
-    inner join changed_lines as l on d.line_id = l.line_id
+    select
+        c.line_id,
+        c.status_valid_from as status_start_ts,
+        c.status_valid_to as status_end_ts,
+        c.time_in_status_seconds as status_duration_seconds,
+        c.status_severity,
+        c.is_good_service,
+        c.is_disrupted,
+        c.source_ingest_ts as ingest_ts,
+        coalesce(d.severity_weight, 0.0) as severity_weight
+    from {{ ref('fact_line_status_change') }} as c
+    inner join changed_lines as l on c.line_id = l.line_id
+    left join {{ ref('dim_status') }} as d
+        on c.status_severity = d.status_severity
+    where
+        c.time_in_status_seconds is not null
+        and c.time_in_status_seconds > 0
+        and c.status_valid_to is not null
 ),
 
 expanded as (
@@ -48,11 +63,11 @@ expanded as (
 overlap as (
     -- Calculate overlap between each status duration and hour bucket.
     select
+        e.ingest_ts,
         e.line_id,
         e.status_severity,
         e.is_good_service,
         e.is_disrupted,
-        e.ingest_ts,
         e.severity_weight,
         e.bucket_hour,
         greatest(e.status_start_ts, e.bucket_hour) as overlap_start,
@@ -74,8 +89,8 @@ scored as (
 
 aggregated as (
     select
-        s.bucket_hour,
         s.line_id,
+        s.bucket_hour,
         to_date(s.bucket_hour) as service_date,
         sum(s.overlap_seconds) as raw_total_seconds,
         {{ sum_when('s.is_good_service', 's.overlap_seconds') }} as raw_good_service_seconds,
@@ -89,13 +104,13 @@ aggregated as (
 )
 
 select
+    max_source_ingest_ts,
     bucket_hour,
     service_date,
     line_id,
     severity_weighted_seconds,
     incident_count,
     worst_status_severity,
-    max_source_ingest_ts,
     least(raw_total_seconds, 3600) as total_seconds,
     greatest(
         least(raw_total_seconds, 3600) - least(raw_disruption_seconds, least(raw_total_seconds, 3600)),
