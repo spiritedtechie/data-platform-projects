@@ -71,7 +71,14 @@ CREATE OR REPLACE VIEW gold_mart_network_day AS
 SELECT *
 FROM iceberg_scan('s3://lake/warehouse/gold/mart_network_day');
 
+CREATE OR REPLACE VIEW gold_mart_line_incident AS
+SELECT *
+FROM iceberg_scan('s3://lake/warehouse/gold/mart_line_incident');
+
+CREATE OR REPLACE VIEW gold_mart_disruption_category_day AS
+SELECT *
+FROM iceberg_scan('s3://lake/warehouse/gold/mart_disruption_category_day');
+
 CREATE OR REPLACE VIEW gold_current_line_status AS
 SELECT *
 FROM iceberg_scan('s3://lake/warehouse/gold/current_line_status');
-

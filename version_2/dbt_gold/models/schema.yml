@@ -246,6 +246,66 @@ models:
         data_tests:
           - not_null
 
+  - name: mart_line_incident
+    columns:
+      - name: line_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_line')
+                field: line_id
+      - name: service_date
+        data_tests:
+          - not_null
+      - name: incident_start_ts
+        data_tests:
+          - not_null
+      - name: primary_disruption_category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Signal Failure', 'Train Cancellations', 'Customer Incident', 'Power Issue', 'Staffing', 'Weather', 'Engineering Work', 'Planned Closure', 'Unknown', 'Other']
+      - name: worst_status_severity
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_status')
+                field: status_severity
+      - name: incident_closed
+        data_tests:
+          - not_null
+
+  - name: mart_disruption_category_day
+    columns:
+      - name: service_date
+        data_tests:
+          - not_null
+      - name: disruption_category
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Signal Failure', 'Train Cancellations', 'Customer Incident', 'Power Issue', 'Staffing', 'Weather', 'Engineering Work', 'Planned Closure', 'Unknown', 'Other']
+      - name: incidents_started
+        data_tests:
+          - not_null
+      - name: closed_incidents
+        data_tests:
+          - not_null
+      - name: open_incidents
+        data_tests:
+          - not_null
+      - name: lines_impacted
+        data_tests:
+          - not_null
+      - name: incident_duration_seconds_sum
+        data_tests:
+          - not_null
+      - name: recovery_rate
+        description: "Share of incidents started on a day/category that have closed."
+
   - name: current_line_status
     columns:
       - name: line_id
